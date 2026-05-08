@@ -6,6 +6,7 @@ import ReviewHomePage from '../features/user/board/reviewboard/ReviewHomePage';
 import ReviewListPage from '../features/user/board/reviewboard/ReviewListPage';
 import ReviewDetailPage from '../features/user/board/reviewboard/ReviewDetailPage';
 import ReviewWritePage from '../features/user/board/reviewboard/ReviewWritePage';
+import EventPage from '../features/user/board/event/EventPage'; // ← 추가
 
 function BoardRouter() {
   return (
@@ -16,7 +17,6 @@ function BoardRouter() {
         <Route path="notice" element={<NoticePage />} />
         <Route path="faq" element={<FaqPage />} />
       </Route>
-
       {/* 리뷰 */}
       <Route path="review" element={<ReviewHomePage />}>
         <Route index element={<Navigate to="list" replace />} />
@@ -24,6 +24,8 @@ function BoardRouter() {
         <Route path="detail/:reviewId" element={<ReviewDetailPage />} />
         <Route path="write" element={<ReviewWritePage />} />
       </Route>
+      {/* 이벤트 */}
+      <Route path="event" element={<EventPage />} /> {/* ← 추가 */}
     </Routes>
   );
 }
