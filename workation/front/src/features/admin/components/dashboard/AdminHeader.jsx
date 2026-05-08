@@ -24,9 +24,7 @@ export default function AdminHeader() {
         <IconBtn aria-label="알림" $hasAlert>
           <BellIcon />
         </IconBtn>
-        <IconBtn aria-label="설정">
-          <SettingsIcon />
-        </IconBtn>
+
         <VertDivider />
         <AdminInfo>
           <InfoText>
