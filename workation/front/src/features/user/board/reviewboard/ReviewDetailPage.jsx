@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -28,12 +29,25 @@ export default function ReviewDetailPage() {
   const navigate = useNavigate();
   const review = dummyData[reviewId];
 
+  const [showConfirm, setShowConfirm] = useState(false);
+
   if (!review) {
     return (
       <Wrapper>
         <p>존재하지 않는 후기입니다.</p>
       </Wrapper>
     );
+  }
+
+  function handleEdit() {
+    // 실제 연동 시 navigate(`/board/review/edit/${reviewId}`) 로 변경
+    navigate(`/board/review/write`);
+  }
+
+  function handleDelete() {
+    // 실제 연동 시 API 호출 후 navigate
+    setShowConfirm(false);
+    navigate('/board/review/list');
   }
 
   return (
@@ -49,9 +63,30 @@ export default function ReviewDetailPage() {
 
       <Body>{review.content}</Body>
 
-      <BackButton onClick={() => navigate('/board/review/list')}>
-        ← 목록으로
-      </BackButton>
+      <ActionRow>
+        <BackButton onClick={() => navigate('/board/review/list')}>
+          ← 목록으로
+        </BackButton>
+        <RightButtons>
+          <EditButton onClick={handleEdit}>수정</EditButton>
+          <DeleteButton onClick={() => setShowConfirm(true)}>삭제</DeleteButton>
+        </RightButtons>
+      </ActionRow>
+
+      {/* 삭제 확인 모달 */}
+      {showConfirm && (
+        <Overlay>
+          <Modal>
+            <ModalText>정말 삭제하시겠습니까?</ModalText>
+            <ModalButtons>
+              <ModalCancel onClick={() => setShowConfirm(false)}>
+                취소
+              </ModalCancel>
+              <ModalConfirm onClick={handleDelete}>삭제</ModalConfirm>
+            </ModalButtons>
+          </Modal>
+        </Overlay>
+      )}
     </Wrapper>
   );
 }
@@ -85,6 +120,17 @@ const Body = styled.p`
   margin-bottom: 48px;
 `;
 
+const ActionRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const RightButtons = styled.div`
+  display: flex;
+  gap: 10px;
+`;
+
 const BackButton = styled.button`
   padding: 12px 24px;
   border-radius: 999px;
@@ -97,5 +143,99 @@ const BackButton = styled.button`
 
   &:hover {
     background: #f3f4f6;
+  }
+`;
+
+const EditButton = styled.button`
+  padding: 12px 24px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  color: #333;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+
+  &:hover {
+    background: #f3f4f6;
+  }
+`;
+
+const DeleteButton = styled.button`
+  padding: 12px 24px;
+  border-radius: 999px;
+  border: none;
+  background: #ef4444;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+
+  &:hover {
+    background: #dc2626;
+  }
+`;
+
+/* ── 삭제 확인 모달 ── */
+
+const Overlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+`;
+
+const Modal = styled.div`
+  background: white;
+  border-radius: 20px;
+  padding: 40px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+`;
+
+const ModalText = styled.p`
+  font-size: 18px;
+  font-weight: 600;
+  color: #111;
+`;
+
+const ModalButtons = styled.div`
+  display: flex;
+  gap: 12px;
+`;
+
+const ModalCancel = styled.button`
+  padding: 12px 28px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  color: #333;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+
+  &:hover {
+    background: #f3f4f6;
+  }
+`;
+
+const ModalConfirm = styled.button`
+  padding: 12px 28px;
+  border-radius: 999px;
+  border: none;
+  background: #ef4444;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+
+  &:hover {
+    background: #dc2626;
   }
 `;
