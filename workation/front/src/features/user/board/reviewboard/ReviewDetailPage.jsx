@@ -24,12 +24,25 @@ const dummyData = {
   },
 };
 
+// 예시 댓글 데이터
+const initialComments = [
+  {
+    id: 1,
+    writer: 'user99',
+    date: '2026.05.08',
+    content: '저도 다녀왔는데 정말 좋더라고요! 강추합니다 😊',
+  },
+];
+
 export default function ReviewDetailPage() {
   const { reviewId } = useParams();
   const navigate = useNavigate();
   const review = dummyData[reviewId];
 
   const [showConfirm, setShowConfirm] = useState(false);
+  const [comments, setComments] = useState(initialComments);
+  const [commentInput, setCommentInput] = useState('');
+  const [deleteCommentId, setDeleteCommentId] = useState(null);
 
   if (!review) {
     return (
@@ -40,18 +53,38 @@ export default function ReviewDetailPage() {
   }
 
   function handleEdit() {
-    // 실제 연동 시 navigate(`/board/review/edit/${reviewId}`) 로 변경
     navigate(`/board/review/write`);
   }
 
   function handleDelete() {
-    // 실제 연동 시 API 호출 후 navigate
     setShowConfirm(false);
     navigate('/board/review/list');
   }
 
+  function handleCommentSubmit() {
+    if (!commentInput.trim()) return;
+    const newComment = {
+      id: Date.now(),
+      writer: 'user01', // 실제 연동 시 로그인 유저로 교체
+      date: new Date()
+        .toLocaleDateString('ko-KR')
+        .replace(/\. /g, '.')
+        .replace('.', '.')
+        .slice(0, 10),
+      content: commentInput.trim(),
+    };
+    setComments((prev) => [...prev, newComment]);
+    setCommentInput('');
+  }
+
+  function handleCommentDelete(commentId) {
+    setComments((prev) => prev.filter((c) => c.id !== commentId));
+    setDeleteCommentId(null);
+  }
+
   return (
     <Wrapper>
+      {/* ── 본문 ── */}
       <DetailTitle>{review.title}</DetailTitle>
 
       <Meta>
@@ -73,7 +106,52 @@ export default function ReviewDetailPage() {
         </RightButtons>
       </ActionRow>
 
-      {/* 삭제 확인 모달 */}
+      {/* ── 댓글 섹션 ── */}
+      <CommentSection>
+        <CommentTitle>
+          댓글 <CommentCount>{comments.length}</CommentCount>
+        </CommentTitle>
+
+        {/* 댓글 목록 */}
+        <CommentList>
+          {comments.map((comment) => (
+            <CommentItem key={comment.id}>
+              <CommentTop>
+                <CommentWriter>{comment.writer}</CommentWriter>
+                <CommentDate>{comment.date}</CommentDate>
+              </CommentTop>
+              <CommentBody>{comment.content}</CommentBody>
+              <CommentDeleteBtn onClick={() => setDeleteCommentId(comment.id)}>
+                삭제
+              </CommentDeleteBtn>
+            </CommentItem>
+          ))}
+
+          {comments.length === 0 && (
+            <EmptyComment>첫 번째 댓글을 남겨보세요 💬</EmptyComment>
+          )}
+        </CommentList>
+
+        {/* 댓글 입력 */}
+        <CommentInputRow>
+          <CommentTextArea
+            placeholder="댓글을 입력하세요"
+            value={commentInput}
+            onChange={(e) => setCommentInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleCommentSubmit();
+              }
+            }}
+          />
+          <CommentSubmitBtn onClick={handleCommentSubmit}>
+            등록
+          </CommentSubmitBtn>
+        </CommentInputRow>
+      </CommentSection>
+
+      {/* ── 게시글 삭제 확인 모달 ── */}
       {showConfirm && (
         <Overlay>
           <Modal>
@@ -87,9 +165,30 @@ export default function ReviewDetailPage() {
           </Modal>
         </Overlay>
       )}
+
+      {/* ── 댓글 삭제 확인 모달 ── */}
+      {deleteCommentId && (
+        <Overlay>
+          <Modal>
+            <ModalText>댓글을 삭제하시겠습니까?</ModalText>
+            <ModalButtons>
+              <ModalCancel onClick={() => setDeleteCommentId(null)}>
+                취소
+              </ModalCancel>
+              <ModalConfirm
+                onClick={() => handleCommentDelete(deleteCommentId)}
+              >
+                삭제
+              </ModalConfirm>
+            </ModalButtons>
+          </Modal>
+        </Overlay>
+      )}
     </Wrapper>
   );
 }
+
+/* ── Styled Components ── */
 
 const Wrapper = styled.div``;
 
@@ -124,6 +223,7 @@ const ActionRow = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 64px;
 `;
 
 const RightButtons = styled.div`
@@ -140,7 +240,6 @@ const BackButton = styled.button`
   font-weight: 600;
   cursor: pointer;
   font-size: 14px;
-
   &:hover {
     background: #f3f4f6;
   }
@@ -155,7 +254,6 @@ const EditButton = styled.button`
   font-weight: 600;
   cursor: pointer;
   font-size: 14px;
-
   &:hover {
     background: #f3f4f6;
   }
@@ -170,13 +268,131 @@ const DeleteButton = styled.button`
   font-weight: 600;
   cursor: pointer;
   font-size: 14px;
-
   &:hover {
     background: #dc2626;
   }
 `;
 
-/* ── 삭제 확인 모달 ── */
+/* ── 댓글 섹션 ── */
+
+const CommentSection = styled.div`
+  border-top: 2px solid black;
+  padding-top: 32px;
+`;
+
+const CommentTitle = styled.h3`
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: #111;
+`;
+
+const CommentCount = styled.span`
+  font-size: 15px;
+  color: #2c6480;
+`;
+
+const CommentList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 32px;
+`;
+
+const CommentItem = styled.div`
+  padding: 20px 10px;
+  border-bottom: 1px solid #e5e7eb;
+  position: relative;
+`;
+
+const CommentTop = styled.div`
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 8px;
+`;
+
+const CommentWriter = styled.span`
+  font-size: 14px;
+  font-weight: 700;
+  color: #111;
+`;
+
+const CommentDate = styled.span`
+  font-size: 13px;
+  color: #bbb;
+`;
+
+const CommentBody = styled.p`
+  font-size: 15px;
+  color: #333;
+  line-height: 1.7;
+`;
+
+const CommentDeleteBtn = styled.button`
+  position: absolute;
+  top: 20px;
+  right: 10px;
+  font-size: 13px;
+  color: #bbb;
+  background: none;
+  border: none;
+  cursor: pointer;
+  &:hover {
+    color: #ef4444;
+  }
+`;
+
+const EmptyComment = styled.div`
+  padding: 32px 0;
+  text-align: center;
+  color: #bbb;
+  font-size: 15px;
+`;
+
+const CommentInputRow = styled.div`
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+`;
+
+const CommentTextArea = styled.textarea`
+  flex: 1;
+  padding: 14px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 14px;
+  color: #333;
+  resize: none;
+  height: 72px;
+  line-height: 1.6;
+  outline: none;
+
+  &::placeholder {
+    color: #bbb;
+  }
+  &:focus {
+    border-color: #2c6480;
+  }
+`;
+
+const CommentSubmitBtn = styled.button`
+  padding: 0 24px;
+  height: 72px;
+  border-radius: 12px;
+  border: none;
+  background: black;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  &:hover {
+    background: #222;
+  }
+`;
+
+/* ── 모달 공통 ── */
 
 const Overlay = styled.div`
   position: fixed;
@@ -219,7 +435,6 @@ const ModalCancel = styled.button`
   font-weight: 600;
   cursor: pointer;
   font-size: 14px;
-
   &:hover {
     background: #f3f4f6;
   }
@@ -234,7 +449,6 @@ const ModalConfirm = styled.button`
   font-weight: 600;
   cursor: pointer;
   font-size: 14px;
-
   &:hover {
     background: #dc2626;
   }
