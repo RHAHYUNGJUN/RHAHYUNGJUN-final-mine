@@ -1,6 +1,14 @@
 package com.kh.app.member.repository;
 
+import com.kh.app.member.entity.MemberEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-public interface MemberRepository extends JpaRepository {
+import java.util.Optional;
+
+@Repository
+public interface MemberRepository extends JpaRepository<MemberEntity, Long> {
+
+    Optional<MemberEntity> findByUsernameAndDeletedAtIsNull(String username);
+
 }

@@ -4,8 +4,12 @@ import com.kh.app.member.dto.request.MemberJoinReqDto;
 import com.kh.app.member.entity.MemberEntity;
 import com.kh.app.member.entity.MemberProfileEntity;
 import com.kh.app.member.entity.RoleEntity;
+import com.kh.app.member.repository.MemberRepository;
+import com.kh.app.member.repository.ProfileRepository;
+import com.kh.app.member.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +18,11 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Slf4j
 public class MemberService {
+    private final BCryptPasswordEncoder passwordEncoder;
+    private final MemberRepository memberRepository;
+    private final ProfileRepository profileRepository;
+    private final RoleRepository roleRepository;
+
     @Transactional
     public void join(MemberJoinReqDto dto) {
 

@@ -1,16 +1,21 @@
 package com.kh.app.security.user;
 
+import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.util.List;
 
 @Getter
-@Setter
+@Builder
 public class UserVo {
+
+    private Long id;
+
     private String username;
+
     private String password;
-    private List<String> role;
 
+    private List<String> roles;
 
+    private String banYn;
 }

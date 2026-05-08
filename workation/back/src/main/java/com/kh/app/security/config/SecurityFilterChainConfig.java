@@ -17,7 +17,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Configuration
 @EnableWebSecurity
@@ -44,11 +44,11 @@ public class SecurityFilterChainConfig {
                 auth ->
                         auth
                                 .requestMatchers("/api/guest/**").anonymous()
-                                .requestMatchers("/api/auth/**").hasAnyAuthority("USER", "SELLER", "ADMIN")
                                 .requestMatchers("/api/public/**").permitAll()
-                                .requestMatchers("/api/seller/**").hasAnyAuthority("SELLER", "ADMIN")
                                 .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
+                                .requestMatchers("/api/seller/**").hasAnyAuthority("SELLER", "ADMIN")
                                 .requestMatchers("/api/user/**").hasAnyAuthority("SELLER", "USER")
+                                .requestMatchers("/api/auth/**").authenticated()
                                 .anyRequest().authenticated()
         );
 
@@ -58,7 +58,7 @@ public class SecurityFilterChainConfig {
 
         //로그인 필터 설정
         CustomLoginFilter customLoginFilter = new CustomLoginFilter(authenticationManager() , jwtUtil , objectMapper);
-        customLoginFilter.setFilterProcessesUrl("/api/auth/login");
+        customLoginFilter.setFilterProcessesUrl("/api/guest/login");
         hs.addFilterAt( customLoginFilter , UsernamePasswordAuthenticationFilter.class);
         hs.cors(
                 corsCustomizer -> corsCustomizer.configurationSource(new CorsConfigurationSource() {
@@ -73,6 +73,7 @@ public class SecurityFilterChainConfig {
                         conf.addAllowedMethod("*");
                         conf.setAllowCredentials(true);
                         conf.addExposedHeader("*");
+                        conf.addExposedHeader("Authorization");
 
                         return conf;
                     }
