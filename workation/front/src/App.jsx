@@ -9,6 +9,13 @@ import UserRouter from './routes/UserRouter';
 import SellerRouter from './routes/SellerRouter';
 import SellerHomePage from './features/seller/pages/SellerHomePage';
 import AdminRouter from './routes/AdminRouter';
+import MsRouter from './routes/ResvRouter';
+import FindIdPage from './features/member/pages/findId/FindIdPage';
+import FindPassWordPage from './features/member/pages/findPw/FindPassWordPage';
+import SignupPage from './features/member/pages/singup/SignupPage';
+import BoardRouter from './routes/BoardRouter';
+import ResvRouter from './routes/ResvRouter';
+import LoginPage from './features/member/pages/login/LoginPage';
 
 export default function App() {
   return (
@@ -25,14 +32,24 @@ export default function App() {
             1. 각 도메인(기능)별 라우팅은 src/routes 하위의 개별 Router 파일에서 관리합니다.
             2. 새로운 도메인이 추가되면 아래와 같이 path="경로/*" 형태로 연결해 주세요.
             3. 각 팀원은 본인이 맡은 Router 파일만 수정하여 충돌을 방지합니다.
-            */}
-        </Route>
-        {/* Layout 끝 (admin, seller 는 아래 따로 적용) */}
+          */}
 
-        {/* 유저(User) 관련 라우트 - 팀원 <A:blank></A:blank> */}
-        <Route path="user/*" element={<UserRouter />} />
+          {/* 유저(User) 관련 라우트 - 팀원 <A:blank></A:blank> */}
+          <Route path="user/*" element={<UserRouter />} />
+          <Route path="join" element={<SignupPage />} />
+          <Route path="login" element={<LoginPage />} />
+          <Route path="find-id" element={<FindIdPage />} />
+          <Route path="find-password" element={<FindPassWordPage />} />
+
+          {/* 예약(reservation) 관련 라우트 - 팀원 김민성 */}
+          <Route path="resv/*" element={<ResvRouter />} />
+          {/* 게시판(board) 관련 라우트 - 팀원 양희우 */}
+          <Route path="board/*" element={<BoardRouter />} />
+        </Route>
+
         {/* 판매자(Seller) 관련 라우트 - 팀원 김영욱 */}
         <Route path="seller/*" element={<SellerRouter />} />
+
         {/* 관리자(Admin)) 관련 라우트 - 팀원 라형준 */}
         <Route path="admin/*" element={<AdminRouter />} />
       </Routes>
