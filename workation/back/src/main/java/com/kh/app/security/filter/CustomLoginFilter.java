@@ -12,9 +12,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 
@@ -38,21 +37,48 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
     }
 
     @Override
-    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
+    protected void successfulAuthentication(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain chain,
+            Authentication authResult
+    ) throws IOException, ServletException {
+
         System.out.println("login ok ~~~~~~~~~~");
-        CustomUserDetails userDetails = (CustomUserDetails) authResult.getPrincipal();
-        String username = userDetails.getUsername();
-        String role = userDetails.getAuthorities().stream()
-                .findFirst()
-                .map(GrantedAuthority::getAuthority)
-                .orElse("ROLE_USER");
-        String jwt = jwtUtil.createJwt(username, role);
+
+        CustomUserDetails userDetails =
+                (CustomUserDetails) authResult.getPrincipal();
+
+        UserVo vo = userDetails.getUserVo();
+
+        String jwt = jwtUtil.createJwt(
+                vo.getId(),
+                vo.getUsername(),
+                vo.getRoles()
+        );
+
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.setContentType("application/json;charset=UTF-8");
+
         response.setHeader("Authorization", "Bearer " + jwt);
+        response.getWriter().write("""
+        {
+            "result": "success",
+            "token": "%s"
+        }
+    """.formatted(jwt));
     }
 
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException, ServletException {
-        System.out.println("login fail..." );
+        response.setContentType("application/json;charset=UTF-8");
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+
+        response.getWriter().write("""
+            {
+                "result": "fail",
+                "message": "아이디 또는 비밀번호가 올바르지 않습니다."
+            }
+            """);
     }
 }

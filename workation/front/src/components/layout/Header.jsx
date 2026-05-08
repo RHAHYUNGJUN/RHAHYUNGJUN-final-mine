@@ -34,7 +34,7 @@ export default function Header() {
         <Right>
           <LoginBtn
             onClick={() => {
-              navi(`/user/login`);
+              navi(`/login`);
             }}
           >
             로그인

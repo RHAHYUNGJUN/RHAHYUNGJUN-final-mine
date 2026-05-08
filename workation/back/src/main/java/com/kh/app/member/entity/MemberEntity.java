@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "MEMBER")
@@ -32,10 +33,22 @@ public class MemberEntity{
     @Column(length = 1 , nullable = false)
     private String banYn;
 
+    @OneToMany(mappedBy = "member")
+    private List<RoleEntity> roleList;
+
+
     @PrePersist
     public void prePersist(){
         this.createdAt = LocalDateTime.now();
         this.banYn = "N";
+    }
+
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    public void ban() {
+        this.banYn = "Y";
     }
 
 
