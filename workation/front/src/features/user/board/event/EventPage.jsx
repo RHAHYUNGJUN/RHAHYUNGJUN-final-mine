@@ -1,12 +1,19 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+
+// ─────────────────────────────────────────────
+// 📌 나중에 AuthContext 연동 시 아래 줄로 교체하세요
+// import { useAuth } from '../../../../context/AuthContext';
+// const { isLoggedIn } = useAuth();
+// ─────────────────────────────────────────────
+const MOCK_IS_LOGGED_IN = false; // 로그인 테스트: true / false로 변경
 
 const coupons = [
   {
     id: 1,
     label: '신규 가입 축하 쿠폰',
     discount: 10,
-    code: 'WELCOME10',
     description: '첫 예약 시 10% 할인',
     expiry: '2026.06.30',
     color: '#c3edf6',
@@ -16,7 +23,6 @@ const coupons = [
     id: 2,
     label: '봄 시즌 특별 쿠폰',
     discount: 20,
-    code: 'SPRING20',
     description: '5월 한 달 예약 시 20% 할인',
     expiry: '2026.05.31',
     color: '#f6e5ba',
@@ -26,7 +32,6 @@ const coupons = [
     id: 3,
     label: '주말 특가 쿠폰',
     discount: 15,
-    code: 'WEEKEND15',
     description: '주말 예약 한정 15% 할인',
     expiry: '2026.06.15',
     color: '#e0f2e9',
@@ -36,7 +41,6 @@ const coupons = [
     id: 4,
     label: '장기 이용 감사 쿠폰',
     discount: 25,
-    code: 'LOYAL25',
     description: '3박 이상 예약 시 25% 할인',
     expiry: '2026.07.31',
     color: '#ede9fe',
@@ -45,19 +49,60 @@ const coupons = [
 ];
 
 export default function EventPage() {
-  const [copiedId, setCopiedId] = useState(null);
+  const navigate = useNavigate();
 
-  function handleCopy(coupon) {
-    navigator.clipboard.writeText(coupon.code).then(() => {
-      setCopiedId(coupon.id);
-      setTimeout(() => setCopiedId(null), 2000);
-    });
+  // 발급된 쿠폰 id 목록 (실제 연동 시 서버에서 유저 보유 쿠폰 조회로 교체)
+  const [issuedIds, setIssuedIds] = useState([]);
+
+  // 각 버튼 상태: 'idle' | 'notLoggedIn' | 'issued' | 'duplicate'
+  const [btnState, setBtnState] = useState({});
+
+  function handleIssue(couponId) {
+    // ── 로그인 체크 ──
+    if (!MOCK_IS_LOGGED_IN) {
+      setBtnState((prev) => ({ ...prev, [couponId]: 'notLoggedIn' }));
+      setTimeout(
+        () => setBtnState((prev) => ({ ...prev, [couponId]: 'idle' })),
+        2500
+      );
+      return;
+    }
+
+    // ── 중복 체크 ──
+    if (issuedIds.includes(couponId)) {
+      setBtnState((prev) => ({ ...prev, [couponId]: 'duplicate' }));
+      setTimeout(
+        () => setBtnState((prev) => ({ ...prev, [couponId]: 'idle' })),
+        2500
+      );
+      return;
+    }
+
+    // ── 발급 완료 ──
+    setIssuedIds((prev) => [...prev, couponId]);
+    setBtnState((prev) => ({ ...prev, [couponId]: 'issued' }));
+  }
+
+  function getButtonLabel(couponId) {
+    const state = btnState[couponId] || 'idle';
+    if (state === 'notLoggedIn') return '🔒 로그인이 필요합니다';
+    if (state === 'duplicate') return '이미 발급된 쿠폰입니다';
+    if (issuedIds.includes(couponId)) return '✓ 발급완료';
+    return '쿠폰 받기';
+  }
+
+  function getButtonStyle(couponId) {
+    const state = btnState[couponId] || 'idle';
+    if (state === 'notLoggedIn') return 'notLoggedIn';
+    if (state === 'duplicate') return 'duplicate';
+    if (issuedIds.includes(couponId)) return 'issued';
+    return 'idle';
   }
 
   return (
     <Wrapper>
       <Title>이벤트 &amp; 쿠폰</Title>
-      <SubTitle>쿠폰 코드를 복사해 예약 시 적용하세요</SubTitle>
+      <SubTitle>쿠폰을 발급받아 예약 시 할인 혜택을 누리세요</SubTitle>
 
       <Grid>
         {coupons.map((coupon) => (
@@ -78,15 +123,13 @@ export default function EventPage() {
 
             <CardBottom>
               <ExpiryText>유효기간 · {coupon.expiry}까지</ExpiryText>
-              <CodeRow>
-                <CodeBox>{coupon.code}</CodeBox>
-                <CopyButton
-                  $copied={copiedId === coupon.id}
-                  onClick={() => handleCopy(coupon)}
-                >
-                  {copiedId === coupon.id ? '✓ 복사됨' : '코드 복사'}
-                </CopyButton>
-              </CodeRow>
+              <IssueButton
+                $style={getButtonStyle(coupon.id)}
+                onClick={() => handleIssue(coupon.id)}
+                disabled={issuedIds.includes(coupon.id)}
+              >
+                {getButtonLabel(coupon.id)}
+              </IssueButton>
             </CardBottom>
           </CouponCard>
         ))}
@@ -96,10 +139,10 @@ export default function EventPage() {
         <NoticeTitle>쿠폰 유의사항</NoticeTitle>
         <NoticeList>
           <li>
-            쿠폰은 예약 결제 시 쿠폰 코드 입력란에 입력하면 자동 적용됩니다.
+            쿠폰은 예약 결제 시 보유 쿠폰 목록에서 선택해 적용할 수 있습니다.
           </li>
           <li>쿠폰은 1회 예약에 1장만 사용 가능합니다.</li>
-          <li>일부 쿠폰은 특정 상품에 한해 적용될 수 있습니다.</li>
+          <li>동일한 쿠폰은 중복 발급되지 않습니다.</li>
           <li>유효기간이 지난 쿠폰은 사용이 불가합니다.</li>
         </NoticeList>
       </Notice>
@@ -211,37 +254,28 @@ const ExpiryText = styled.div`
   margin-bottom: 12px;
 `;
 
-const CodeRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-`;
+const btnColors = {
+  idle: { bg: '#111', hover: '#333' },
+  issued: { bg: '#22c55e', hover: '#16a34a' },
+  notLoggedIn: { bg: '#ef4444', hover: '#dc2626' },
+  duplicate: { bg: '#f97316', hover: '#ea580c' },
+};
 
-const CodeBox = styled.div`
-  flex: 1;
-  padding: 10px 16px;
-  background: white;
-  border-radius: 10px;
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: #333;
-`;
-
-const CopyButton = styled.button`
-  padding: 10px 20px;
-  border-radius: 10px;
+const IssueButton = styled.button`
+  width: 100%;
+  padding: 12px 0;
+  border-radius: 12px;
   border: none;
-  background: ${({ $copied }) => ($copied ? '#22c55e' : 'black')};
+  background: ${({ $style }) => btnColors[$style]?.bg || '#111'};
   color: white;
   font-size: 14px;
   font-weight: 600;
-  cursor: pointer;
+  cursor: ${({ disabled }) => (disabled ? 'default' : 'pointer')};
   transition: background 0.2s;
-  white-space: nowrap;
 
   &:hover {
-    background: ${({ $copied }) => ($copied ? '#16a34a' : '#333')};
+    background: ${({ $style, disabled }) =>
+      disabled ? btnColors['issued'].bg : btnColors[$style]?.hover || '#333'};
   }
 `;
 
