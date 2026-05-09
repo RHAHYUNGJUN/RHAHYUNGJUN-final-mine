@@ -1,46 +1,31 @@
 // src/features/admin/components/dashboard/AdminChartPanel.jsx
 import { useState } from 'react';
 import styled from 'styled-components';
-import { ADMIN_CHART_DATA, SYSTEM_ALERTS } from '../../data/adminDashboardData';
+import { ADMIN_CHART_DATA, REGIONAL_SALES_DATA } from '../../data/adminDashboardData';
 
 export default function AdminChartPanel() {
-  const [period, setPeriod] = useState('최근 6개월');
   const maxHeight = Math.max(...ADMIN_CHART_DATA.map((d) => d.height));
 
   return (
     <Grid>
-      {/* ── 왼쪽: 매출 차트 ── */}
+      {/* ── 왼쪽: 월간 매출 트렌드 차트 ── */}
       <ChartCard>
         <ChartHeader>
           <ChartTitleGroup>
             <ChartTitle>월간 매출 트렌드</ChartTitle>
             <ChartSub>지난 6개월간의 결제 데이터 추이</ChartSub>
           </ChartTitleGroup>
-          <PeriodSelect>
-            <select value={period} onChange={(e) => setPeriod(e.target.value)}>
-              <option>최근 6개월</option>
-              <option>최근 3개월</option>
-              <option>최근 1년</option>
-            </select>
-            <ChevronIcon />
-          </PeriodSelect>
+          <PeriodBtn>최근 6개월</PeriodBtn>
         </ChartHeader>
 
         <BarChart>
-          {/* 가이드 라인 */}
           <GridLines>
             {[0, 1, 2, 3].map((i) => <GridLine key={i} />)}
           </GridLines>
-
-          {/* 바 */}
           <Bars>
             {ADMIN_CHART_DATA.map((d) => (
               <BarCol key={d.month}>
-                <Bar
-                  $height={d.height}
-                  $highlight={d.highlight}
-                  $maxHeight={maxHeight}
-                />
+                <Bar $height={d.height} $highlight={d.highlight} />
                 <BarLabel $highlight={d.highlight}>{d.month}</BarLabel>
               </BarCol>
             ))}
@@ -48,39 +33,28 @@ export default function AdminChartPanel() {
         </BarChart>
       </ChartCard>
 
-      {/* ── 오른쪽: 실시간 시스템 알림 ── */}
-      <AlertCard>
-        <AlertCardHeader>
-          <AlertTitle>실시간 시스템 알림</AlertTitle>
-          <AlertSub>최근 발생한 시스템 주요 이벤트</AlertSub>
-        </AlertCardHeader>
+      {/* ── 오른쪽: 지역별 매출 순위 ── */}
+      <RegionCard>
+        <RegionCardHeader>
+          <RegionTitle>지역별 매출 순위</RegionTitle>
+          <RegionSub>지역별 실적 TOP 5</RegionSub>
+        </RegionCardHeader>
 
-        <AlertList>
-          {SYSTEM_ALERTS.map((alert) => (
-            <AlertItem key={alert.id}>
-              <AlertDot $color={alert.color} />
-              <AlertContent>
-                <AlertItemTitle>{alert.title}</AlertItemTitle>
-                <AlertItemDesc>{alert.desc}</AlertItemDesc>
-                <AlertTime>{alert.time}</AlertTime>
-              </AlertContent>
-            </AlertItem>
+        <RegionList>
+          {REGIONAL_SALES_DATA.map((item) => (
+            <RegionItem key={item.rank}>
+              <RegionRank>{item.rank}</RegionRank>
+              <RegionName>{item.region}</RegionName>
+              <RegionAmount>{item.amount}</RegionAmount>
+            </RegionItem>
           ))}
-        </AlertList>
+        </RegionList>
 
-        <AlertFooter>
-          <AlertAllBtn>전체 알림 보기</AlertAllBtn>
-        </AlertFooter>
-      </AlertCard>
+        <RegionFooter>
+          <RegionAllBtn>전체 순위 보기 &gt;</RegionAllBtn>
+        </RegionFooter>
+      </RegionCard>
     </Grid>
-  );
-}
-
-function ChevronIcon() {
-  return (
-    <svg width="19.5" height="19.5" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="6 9 12 15 18 9"/>
-    </svg>
   );
 }
 
@@ -92,7 +66,6 @@ const Grid = styled.div`
   gap: 32px;
 `;
 
-/* 차트 카드 */
 const ChartCard = styled.div`
   background: white;
   border: 1px solid #e2e8f0;
@@ -128,29 +101,17 @@ const ChartSub = styled.p`
   color: #64748b;
 `;
 
-const PeriodSelect = styled.div`
-  position: relative;
-  display: flex;
-  align-items: center;
-
-  select {
-    appearance: none;
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 4px;
-    padding: 9px 41px 9px 13px;
-    font-size: 13px;
-    color: #0d1c2e;
-    font-family: inherit;
-    cursor: pointer;
-    outline: none;
-  }
-
-  svg {
-    position: absolute;
-    right: 9px;
-    pointer-events: none;
-  }
+const PeriodBtn = styled.button`
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 9px 13px;
+  font-size: 13px;
+  color: #0d1c2e;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+  &:hover { background: #f8fafc; }
 `;
 
 const BarChart = styled.div`
@@ -170,8 +131,6 @@ const GridLines = styled.div`
 
 const GridLine = styled.div`
   width: 100%;
-  height: 1px;
-  background: #f8fafc;
   border-top: 1px solid #f8fafc;
 `;
 
@@ -195,22 +154,23 @@ const BarCol = styled.div`
 const Bar = styled.div`
   width: 100%;
   height: ${({ $height }) => $height}px;
-  background: ${({ $highlight }) => $highlight ? '#3d646c' : '#f1f5f9'};
+  background: ${({ $highlight }) => ($highlight ? '#3d646c' : '#f1f5f9')};
   border-radius: 4px 4px 0 0;
   box-shadow: ${({ $highlight }) =>
-    $highlight ? '0 10px 15px -3px rgba(19,78,74,0.1), 0 4px 6px -4px rgba(19,78,74,0.1)' : 'none'};
+    $highlight
+      ? '0 10px 15px -3px rgba(19,78,74,0.1), 0 4px 6px -4px rgba(19,78,74,0.1)'
+      : 'none'};
   transition: background 0.2s;
 `;
 
 const BarLabel = styled.span`
   font-size: 12px;
-  font-weight: ${({ $highlight }) => $highlight ? '700' : '600'};
-  color: ${({ $highlight }) => $highlight ? '#244c54' : '#94a3b8'};
+  font-weight: ${({ $highlight }) => ($highlight ? '700' : '600')};
+  color: ${({ $highlight }) => ($highlight ? '#244c54' : '#94a3b8')};
   letter-spacing: 0.6px;
 `;
 
-/* 알림 카드 */
-const AlertCard = styled.div`
+const RegionCard = styled.div`
   background: white;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
@@ -220,91 +180,79 @@ const AlertCard = styled.div`
   overflow: hidden;
 `;
 
-const AlertCardHeader = styled.div`
-  padding: 24px 24px 25px;
+const RegionCardHeader = styled.div`
+  padding: 24px 24px 20px;
   border-bottom: 1px solid #f1f5f9;
   display: flex;
   flex-direction: column;
   gap: 2px;
 `;
 
-const AlertTitle = styled.h2`
+const RegionTitle = styled.h2`
   font-size: 20px;
   font-weight: 500;
   color: #0d1c2e;
 `;
 
-const AlertSub = styled.p`
+const RegionSub = styled.p`
   font-size: 13px;
   color: #64748b;
 `;
 
-const AlertList = styled.div`
+const RegionList = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 16px;
 `;
 
-const AlertItem = styled.div`
+const RegionItem = styled.div`
   display: flex;
+  align-items: center;
   gap: 16px;
-  align-items: flex-start;
-  padding: 12px;
-  border-radius: 4px;
+  padding: 18px 24px;
+  border-bottom: 1px solid #f8fafc;
+  &:last-child { border-bottom: none; }
 `;
 
-const AlertDot = styled.div`
-  width: 8px; height: 8px;
+const RegionRank = styled.div`
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: ${({ $color }) => $color};
-  flex-shrink: 0;
-  margin-top: 8px;
-`;
-
-const AlertContent = styled.div`
+  background: #244c54;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-family: 'Plus Jakarta Sans', sans-serif;
 `;
 
-const AlertItemTitle = styled.p`
-  font-size: 13px;
+const RegionName = styled.span`
+  flex: 1;
+  font-size: 14px;
   font-weight: 500;
   color: #0d1c2e;
-  line-height: 1.4;
 `;
 
-const AlertItemDesc = styled.p`
-  font-size: 12px;
-  color: #64748b;
-  line-height: 1.5;
+const RegionAmount = styled.span`
+  font-size: 14px;
+  font-weight: 600;
+  color: #0d1c2e;
+  font-family: 'Plus Jakarta Sans', sans-serif;
 `;
 
-const AlertTime = styled.p`
-  font-size: 10px;
-  font-weight: 500;
-  color: #94a3b8;
-`;
-
-const AlertFooter = styled.div`
+const RegionFooter = styled.div`
   border-top: 1px solid #f1f5f9;
-  padding: 17px 16px 16px;
+  padding: 16px 24px;
+  text-align: right;
 `;
 
-const AlertAllBtn = styled.button`
-  width: 100%;
-  padding: 8px;
-  border-radius: 4px;
+const RegionAllBtn = styled.button`
   font-size: 12px;
   font-weight: 500;
-  color: #244c54;
-  text-align: center;
-  letter-spacing: 0.6px;
-  transition: background 0.15s;
-
-  &:hover {
-    background: #f0fdf4;
-  }
+  color: #64748b;
+  transition: color 0.15s;
+  &:hover { color: #244c54; }
 `;
