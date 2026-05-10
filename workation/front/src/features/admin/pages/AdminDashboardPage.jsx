@@ -2,7 +2,7 @@
 import styled from 'styled-components';
 import AdminStatCards from '../components/dashboard/AdminStatCards';
 import AdminChartPanel from '../components/dashboard/AdminChartPanel';
-import AdminActivityTable from '../components/dashboard/AdminActivityTable';
+import AdminPaymentTable from '../components/dashboard/AdminPaymentTable';
 
 /**
  * 관리자 대시보드 메인 페이지
@@ -15,7 +15,7 @@ export default function AdminDashboardPage() {
       <PageHeader>
         <PageTitleGroup>
           <PageTitle>대시보드 개요</PageTitle>
-          <PageSub>실시간 성과 지표 및 최근 관리 활동 요약</PageSub>
+          <PageSub>실시간 판매 성과 및 최근 활동 요약</PageSub>
         </PageTitleGroup>
         <HeaderActions>
           <ExportBtn>
@@ -32,11 +32,11 @@ export default function AdminDashboardPage() {
       {/* 통계 카드 4개 */}
       <AdminStatCards />
 
-      {/* 차트 + 알림 */}
+      {/* 차트 + 지역별 순위 */}
       <AdminChartPanel />
 
-      {/* 활동 로그 테이블 */}
-      <AdminActivityTable />
+      {/* 결제 내역 테이블 */}
+      <AdminPaymentTable />
     </>
   );
 }
@@ -105,7 +105,6 @@ const ExportBtn = styled.button`
   color: #475569;
   font-family: inherit;
   transition: background 0.15s;
-
   &:hover { background: #f8fafc; }
 `;
 
@@ -121,6 +120,5 @@ const RegisterBtn = styled.button`
   color: white;
   font-family: inherit;
   transition: background 0.15s;
-
   &:hover { background: #3d646c; }
 `;
