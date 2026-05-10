@@ -103,23 +103,33 @@ export const RECENT_PAYMENTS = [
 ];
 
 export const PAYMENT_STATUS_MAP = {
-  paid:     { label: '결제완료', bg: '#dcfce7', color: '#15803d' },
-  pending:  { label: '결제대기', bg: '#ffedd5', color: '#c2410c' },
+  paid: { label: '결제완료', bg: '#dcfce7', color: '#15803d' },
+  pending: { label: '결제대기', bg: '#ffedd5', color: '#c2410c' },
   refunded: { label: '환불완료', bg: '#fee2e2', color: '#b91c1c' },
-  shipping: { label: '배송중',   bg: '#dbeafe', color: '#1d4ed8' },
+  shipping: { label: '배송중', bg: '#dbeafe', color: '#1d4ed8' },
 };
 
 export const ADMIN_NAV_ITEMS = [
-  { id: 'dashboard',    label: '대시보드',      path: '/admin/dashboard',    icon: 'grid' },
-  { id: 'spaces',       label: '숙소 관리',      path: '/admin/spaces',       icon: 'home' },
-  { id: 'reservations', label: '예약/기업 관리', path: '/admin/reservations', icon: 'bookmark' },
-  { id: 'sellers',      label: '판매자 관리',    path: '/admin/sellers',      icon: 'users' },
-  { id: 'board',        label: '게시판 관리',    path: '/admin/board',        icon: 'file' },
-  { id: 'sales',        label: '정산/매출',      path: '/admin/sales',        icon: 'coin' },
+  { id: 'dashboard', label: '매출', path: '/admin/dashboard', icon: 'grid' },
+  { id: 'spaces', label: '숙소 관리', path: '/admin/spaces', icon: 'home' },
+  {
+    id: 'reservations',
+    label: '예약/기업 관리',
+    path: '/admin/reservations',
+    icon: 'bookmark',
+  },
+  {
+    id: 'sellers',
+    label: '판매자 관리',
+    path: '/admin/sellers',
+    icon: 'users',
+  },
+  { id: 'board', label: '게시판 관리', path: '/admin/board', icon: 'file' },
+  { id: 'sales', label: '정산', path: '/admin/sales', icon: 'coin' },
 ];
 
 export const STATUS_MAP = {
   success: { label: '성공', bg: '#dcfce7', color: '#15803d' },
   pending: { label: '대기', bg: '#ffedd5', color: '#c2410c' },
-  failed:  { label: '실패', bg: '#fee2e2', color: '#b91c1c' },
+  failed: { label: '실패', bg: '#fee2e2', color: '#b91c1c' },
 };
