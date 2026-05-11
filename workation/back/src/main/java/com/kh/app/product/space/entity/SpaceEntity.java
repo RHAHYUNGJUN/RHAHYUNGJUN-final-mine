@@ -59,7 +59,7 @@ public class SpaceEntity extends BaseEntity {
     @Column(name = "area", nullable = false)
     private Area areaId;
 
-    private Long applyId;//join
+    private Long applyId;//join해야함
 
 
 }
