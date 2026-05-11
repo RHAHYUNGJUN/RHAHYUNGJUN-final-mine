@@ -27,19 +27,17 @@ public class ReservationEntity {
     //    private CouponEntity coupon;
     //
     //    @ManyToOne(fetch = FetchType.LAZY)
-    //    @JoinColumn(nullable = false)
+    //    @JoinColumn
     //    private StayEntity stay;
     //
     //    @ManyToOne(fetch = FetchType.LAZY)
-    //    @JoinColumn(nullable = false)
+    //    @JoinColumn
     //    private OfficeEntity office;
 ///  /////////////////////////////
     private Long couponId;
 
-    @Column(nullable = false)
     private Long stayId;
 
-    @Column(nullable = false)
     private Long officeId;
     /// //////////////////////////////////////
 
@@ -88,5 +86,14 @@ public class ReservationEntity {
 
     public void markReviewed() {
         this.reviewYn = "Y";
+    }
+
+
+    @PrePersist
+    @PreUpdate
+    private void validateTarget() {
+        if (stayId == null && officeId == null) {
+            throw new IllegalStateException("예약 대상이 없습니다.");
+        }
     }
 }

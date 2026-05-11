@@ -3,12 +3,12 @@ package com.kh.app.transaction.reservation.service;
 import com.kh.app.member.entity.MemberEntity;
 import com.kh.app.member.repository.MemberRepository;
 import com.kh.app.transaction.reservation.dto.request.ReservationCreateReqDto;
-import com.kh.app.transaction.reservation.dto.response.ReservationResDto;
 import com.kh.app.transaction.reservation.entity.ReservationEntity;
 import com.kh.app.transaction.reservation.entity.ReserveFileEntity;
 import com.kh.app.transaction.reservation.repository.ReservationRepository;
 import com.kh.app.transaction.reservation.repository.ReserveFileRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,6 +18,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class ReservationService {
 
     private final ReservationRepository reservationRepository;
