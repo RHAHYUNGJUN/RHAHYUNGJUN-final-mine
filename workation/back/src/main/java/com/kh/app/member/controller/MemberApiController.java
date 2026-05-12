@@ -3,6 +3,7 @@ package com.kh.app.member.controller;
 import com.kh.app.member.dto.request.MemberJoinReqDto;
 import com.kh.app.member.dto.request.SellerApplyReqDto;
 import com.kh.app.member.dto.response.BankRespDto;
+import com.kh.app.member.dto.response.MemberMeRespDto;
 import com.kh.app.member.entity.BankEntity;
 import com.kh.app.member.repository.BankRepository;
 import com.kh.app.member.service.MemberService;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -43,6 +45,14 @@ public class MemberApiController {
                 .map(BankRespDto::from)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(banks);
+    }
+
+    @GetMapping("/user/me")
+    public MemberMeRespDto getMyInfo(Authentication authentication) {
+
+        String username = authentication.getName();
+
+        return memberService.getMyInfo(username);
     }
 
 

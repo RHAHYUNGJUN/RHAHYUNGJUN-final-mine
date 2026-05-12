@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 import LoginPage from '../features/member/pages/login/LoginPage';
 import SignupPage from '../features/member/pages/singup/SignupPage';
 import SellerApplyPage from '../features/member/pages/sellerApply/SellerApplyPage';
+import MyPage from '../features/user/mypage/pages/MyPage';
 
 /**
  * User 도메인 라우터
@@ -14,7 +15,7 @@ export default function MypageRouter() {
   return (
     <Routes>
       {/* 예시: /mypage */}
-      <Route index element={<div>My Page (준비 중)</div>} />
+      <Route index element={<MyPage />} />
       <Route path="seller-apply" element={<SellerApplyPage />} />
       {/* <Route path="mypage/reservation" element={<MyReservationListPage />} /> */}
 

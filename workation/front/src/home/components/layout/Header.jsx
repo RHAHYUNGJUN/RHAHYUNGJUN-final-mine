@@ -120,31 +120,27 @@ const Nav = styled.nav`
 `;
 
 const Inner = styled.div`
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 32px;
+  max-width: 100%;
+  padding: 0 40px;
   height: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
 `;
 
 const Left = styled.div`
   display: flex;
   align-items: center;
-  flex: 1;
+  margin-right: 80px;
 `;
 
 const Center = styled.div`
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex: 1;
 `;
 
 const Logo = styled(NavLink)`
-  font-size: 20px;
-  font-weight: 500;
+  font-size: 24px;
+  font-weight: 700;
   background: ${({ theme }) => theme.gradients.logo};
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -155,7 +151,7 @@ const Logo = styled(NavLink)`
 const Links = styled.div`
   display: flex;
   align-items: center;
-  gap: 50px;
+  gap: 36px;
 `;
 
 const NavItem = styled(NavLink)`
@@ -183,11 +179,10 @@ const NavItem = styled(NavLink)`
 `;
 
 const Right = styled.div`
+  margin-left: auto;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 16px;
-  flex: 1;
+  gap: 14px;
 `;
 
 const LoginBtn = styled.button`
