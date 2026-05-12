@@ -2,8 +2,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from 'styled-components';
 import { theme } from './styles/theme';
 import GlobalStyle from './styles/GlobalStyle';
-import Layout from './components/layout/Layout';
-import HomePage from './pages/HomePage';
+import Layout from './home/components/layout/Layout';
+import HomePage from './home/pages/HomePage';
 
 import UserRouter from './routes/MypageRouter';
 import SellerRouter from './routes/SellerRouter';
@@ -16,6 +16,7 @@ import SignupPage from './features/member/pages/singup/SignupPage';
 import BoardRouter from './routes/BoardRouter';
 import ResvRouter from './routes/ResvRouter';
 import LoginPage from './features/member/pages/login/LoginPage';
+import MypageRouter from './routes/MypageRouter';
 
 export default function App() {
   return (
@@ -35,7 +36,7 @@ export default function App() {
           */}
 
           {/* 유저(User) 관련 라우트 - 팀원 <A:blank></A:blank> */}
-          <Route path="mypage/*" element={<UserRouter />} />
+          <Route path="mypage/*" element={<MypageRouter />} />
           <Route path="join" element={<SignupPage />} />
           <Route path="login" element={<LoginPage />} />
           <Route path="find-id" element={<FindIdPage />} />
