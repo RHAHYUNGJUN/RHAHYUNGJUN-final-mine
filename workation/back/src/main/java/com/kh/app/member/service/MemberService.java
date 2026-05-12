@@ -2,6 +2,7 @@ package com.kh.app.member.service;
 
 import com.kh.app.member.dto.request.MemberJoinReqDto;
 import com.kh.app.member.dto.request.SellerApplyReqDto;
+import com.kh.app.member.dto.response.MemberMeRespDto;
 import com.kh.app.member.entity.*;
 import com.kh.app.member.repository.BankRepository;
 import com.kh.app.member.repository.MemberRepository;
@@ -60,6 +61,18 @@ public class MemberService {
             SellerEntity sellerEntity = reqDto.toSellerEntity(bank, member);
             sellerRepository.save(sellerEntity);
         }
+
+    public MemberMeRespDto getMyInfo(String username) {
+
+        MemberEntity member = memberRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("회원 없음"));
+
+        return MemberMeRespDto.builder()
+                .memberId(member.getId())
+                .username(member.getUsername())
+                .roleSet(member.getRoleSet())
+                .build();
+    }
 
 
 }
