@@ -25,9 +25,13 @@ public class ReservationResDto {
     private String reserverEmail;
 
     private Long totalPrice;
+
     private String status;
 
-    public static ReservationResDto from(ReservationEntity entity) {
+    public static ReservationResDto from(
+            ReservationEntity entity
+    ) {
+
         return ReservationResDto.builder()
                 .id(entity.getId())
                 .memberId(entity.getMember().getId())
@@ -40,7 +44,7 @@ public class ReservationResDto {
                 .reserverPhone(entity.getReserverPhone())
                 .reserverEmail(entity.getReserverEmail())
                 .totalPrice(entity.getTotalPrice())
-                .status(entity.getStatus())
+                .status(entity.getStatus().name())
                 .build();
     }
 }
