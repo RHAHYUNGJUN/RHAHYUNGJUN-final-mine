@@ -20,7 +20,7 @@ public class StayExtraPriceEntity {
 
     @JoinColumn(name = "STAY_ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
-    private StayEntity stayId;
+    private StayEntity stay;
 
     @Column(nullable = false)
     private LocalDateTime startDate;
@@ -42,5 +42,7 @@ public class StayExtraPriceEntity {
     private int satPrice;
     @Column()
     private int sunPrice;
+    @Column()
+    private int holidayPrice;
 
 }

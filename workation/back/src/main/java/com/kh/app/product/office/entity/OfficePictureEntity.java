@@ -1,24 +1,25 @@
-package com.kh.app.product.space.entity;
+package com.kh.app.product.office.entity;
 
+import com.kh.app.product.stay.entity.StayEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
 
 @Entity
-@Table(name = "SPACE_PICTURE")
+@Table(name = "OFFICE_PICTURE")
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
-public class SpacePictureEntity {
+public class OfficePictureEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @JoinColumn(name = "SPACE_ID", nullable = false)
+    @JoinColumn(name = "OFFICE_ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
-    private SpaceEntity space;
+    private OfficeEntity office;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String filePath;
@@ -35,15 +36,12 @@ public class SpacePictureEntity {
     @Column(nullable = false)
     private Integer sortOrder;
 
-    @Enumerated(EnumType.STRING)
-    @Column(length = 100, nullable = false)
-    private SpacePictureCategory category;
-
     @Column(nullable = false)
     private String contentType;
 
     @Column(nullable = false)
     private Long fileSize;
+
 
 
 }

@@ -24,7 +24,7 @@ public class StayEntity extends BaseEntity {
 
     @JoinColumn(name = "SPACE_ID")
     @ManyToOne
-    private SpaceEntity spaceId;
+    private SpaceEntity space;
 
     @Column(length = 100 , nullable = false , unique = true)
     private String name;
@@ -65,4 +65,6 @@ public class StayEntity extends BaseEntity {
     private int satPrice;
     @Column()
     private int sunPrice;
+    @Column()
+    private int holidayPrice;
 }
