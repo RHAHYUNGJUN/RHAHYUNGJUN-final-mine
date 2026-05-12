@@ -22,7 +22,7 @@ public class SpaceApplyRespDto {
                 .id(entity.getId())
                 .sellerName(entity.getSeller().getProfile().getName())
                 .spaceName(entity.getSpace().getName())
-                .applyStatus(entity.getApplyStatus())
+                .applyStatus(String.valueOf(entity.getApplyStatus()))
                 .reviewedAt(entity.getReviewedAt())
                 .createAt(entity.getCreatedAt().toString())
                 .build();
