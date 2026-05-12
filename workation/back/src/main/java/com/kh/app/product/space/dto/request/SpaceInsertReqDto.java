@@ -1,6 +1,7 @@
 package com.kh.app.product.space.dto.request;
 
 import com.kh.app.product.space.entity.Area;
+import com.kh.app.product.space.entity.SpaceEntity;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -32,5 +33,22 @@ public class SpaceInsertReqDto {
     private List<Long> arcadeIdList;
 
     private List<SpacePictureReqDto> pictureList;
+
+    public SpaceEntity toEntity() {
+
+        return SpaceEntity.builder()
+                .name(name)
+                .phone(phone)
+                .email(email)
+                .summary(summary)
+                .description(description)
+                .address1(address1)
+                .address2(address2)
+                .latitude(latitude)
+                .longitude(longitude)
+                .area(area)
+                .visibleYn("N")
+                .build();
+    }
 
 }

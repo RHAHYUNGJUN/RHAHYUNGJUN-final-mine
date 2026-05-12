@@ -60,5 +60,12 @@ public class SpaceEntity extends BaseEntity {
     private Area area;
 
 
+    public void changeVisibleYn(String visibleYn) {
+        this.visibleYn = visibleYn;
+    }
+
+
+
+
 
 }

@@ -67,4 +67,8 @@ public class StayEntity extends BaseEntity {
     private int sunPrice;
     @Column()
     private int holidayPrice;
+
+    public void changeVisibleYn(String visibleYn) {
+        this.visibleYn = visibleYn;
+    }
 }
