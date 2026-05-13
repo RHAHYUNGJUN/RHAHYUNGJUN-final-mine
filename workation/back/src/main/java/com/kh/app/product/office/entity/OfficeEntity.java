@@ -56,5 +56,9 @@ public class OfficeEntity extends BaseEntity {
     @Column(name = "office_type", nullable = false)
     private OfficeType officeType;
 
+    public void changeVisibleYn(String visibleYn) {
+        this.visibleYn = visibleYn;
+    }
+
 
 }
