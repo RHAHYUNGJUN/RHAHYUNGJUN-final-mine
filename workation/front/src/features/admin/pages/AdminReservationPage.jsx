@@ -5,15 +5,17 @@ import { Calendar, Building2, Search, ChevronLeft as LucideChevronLeft, ChevronR
 import {
   RESERVATION_STAT_CARDS,
   RESERVATION_LIST,
-  RESERVATION_STATUS_MAP,
   PARTNER_COMPANIES,
 } from '../data/adminReservationData';
+import {
+  RESERVATION_STATUS_MAP,
+  TOTAL_RESERVATIONS,
+  TOTAL_PAGES,
+} from '../data/adminReservationConstants';
 import usePagination from '../hooks/usePagination';
 import AdminPagination from '../components/common/AdminPagination';
 import StatusBadge from '../components/common/StatusBadge';
 
-const TOTAL = 1284;
-const TOTAL_PAGES = 3;
 
 export default function AdminReservationPage() {
   const [search, setSearch] = useState('');
@@ -124,7 +126,7 @@ export default function AdminReservationPage() {
 
         <TableFooter>
           <FooterInfo>
-            {TOTAL.toLocaleString()}건 &nbsp;‖&nbsp; 1-10 &nbsp;‖
+            {TOTAL_RESERVATIONS.toLocaleString()}건 &nbsp;‖&nbsp; 1-10 &nbsp;‖
           </FooterInfo>
           <AdminPagination
             currentPage={currentPage}

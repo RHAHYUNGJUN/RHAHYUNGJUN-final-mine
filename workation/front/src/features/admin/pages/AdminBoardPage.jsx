@@ -9,10 +9,12 @@ import {
 } from 'lucide-react';
 import {
   BOARD_STAT_CARDS,
-  BOARD_TABS,
   BOARD_POSTS,
-  POST_STATUS_MAP,
 } from '../data/adminBoardData';
+import {
+  BOARD_TABS,
+  POST_STATUS_MAP,
+} from '../data/adminBoardConstants';
 import usePagination from '../hooks/usePagination';
 import AdminPagination from '../components/common/AdminPagination';
 import StatusBadge from '../components/common/StatusBadge';

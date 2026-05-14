@@ -4,7 +4,8 @@ import styled from 'styled-components';
 import { ChevronLeft as LucideChevronLeft, ChevronRight as LucideChevronRight, Filter } from 'lucide-react';
 import AdminPagination from '../common/AdminPagination';
 import StatusBadge from '../common/StatusBadge';
-import { RECENT_PAYMENTS, PAYMENT_STATUS_MAP } from '../../data/adminDashboardData';
+import { RECENT_PAYMENTS } from '../../data/adminDashboardData';
+import { PAYMENT_STATUS_MAP } from '../../data/adminDashboardConstants';
 
 const TOTAL = 2401;
 const TOTAL_PAGES = 3;

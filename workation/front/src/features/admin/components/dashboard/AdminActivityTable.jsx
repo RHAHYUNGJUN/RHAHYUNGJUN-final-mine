@@ -4,7 +4,8 @@ import styled from 'styled-components';
 import { ChevronLeft as LucideChevronLeft, ChevronRight as LucideChevronRight } from 'lucide-react';
 import AdminPagination from '../common/AdminPagination';
 import StatusBadge from '../common/StatusBadge';
-import { ADMIN_ACTIVITY_LOGS, STATUS_MAP } from '../../data/adminDashboardData';
+import { ADMIN_ACTIVITY_LOGS } from '../../data/adminDashboardData';
+import { STATUS_MAP } from '../../data/adminDashboardConstants';
 
 const TOTAL = 2401;
 const PER_PAGE = 4;

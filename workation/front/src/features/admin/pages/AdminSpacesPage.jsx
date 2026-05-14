@@ -4,9 +4,11 @@ import styled from 'styled-components';
 import { Home, CheckCircle, AlertTriangle, Filter, Trash2 } from 'lucide-react';
 import {
   SPACES_STAT_CARDS,
-  SPACES_STATUS_MAP,
   SPACES_LIST,
 } from '../data/adminSpacesData';
+import {
+  SPACES_STATUS_MAP,
+} from '../data/adminSpacesConstants';
 import usePagination from '../hooks/usePagination';
 import AdminPagination from '../components/common/AdminPagination';
 import StatusBadge from '../components/common/StatusBadge';
