@@ -1,5 +1,7 @@
 package com.kh.app.product.stay.dto.request;
 
+import com.kh.app.product.space.entity.SpaceEntity;
+import com.kh.app.product.stay.entity.StayEntity;
 import com.kh.app.product.stay.entity.StayOption;
 import lombok.Getter;
 import lombok.Setter;
@@ -42,6 +44,29 @@ public class StayInsertReqDto {
     private List<StayPictureReqDto> pictureList;
 
     private List<StayExtraPriceReqDto> extraPriceList;
+
+    public StayEntity toEntity(SpaceEntity space) {
+
+        return StayEntity.builder()
+                .space(space)
+                .name(name)
+                .summary(summary)
+                .description(description)
+                .capacity(capacity)
+                .maxCapa(maxCapa)
+                .checkInTime(checkInTime)
+                .checkOutTime(checkOutTime)
+                .monPrice(monPrice)
+                .tuePrice(tuePrice)
+                .wedPrice(wedPrice)
+                .thuPrice(thuPrice)
+                .friPrice(friPrice)
+                .satPrice(satPrice)
+                .sunPrice(sunPrice)
+                .holidayPrice(holidayPrice)
+                .visibleYn("Y")
+                .build();
+    }
 
 
 }

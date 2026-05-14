@@ -1,1 +1,4 @@
 **/node_modules/
+CLAUDE.md
+.claude/
+**/application-private.properties
