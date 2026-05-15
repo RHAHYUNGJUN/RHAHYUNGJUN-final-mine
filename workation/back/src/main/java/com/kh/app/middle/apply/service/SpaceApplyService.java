@@ -2,6 +2,8 @@ package com.kh.app.middle.apply.service;
 
 import com.kh.app.member.entity.MemberEntity;
 import com.kh.app.member.repository.MemberRepository;
+import com.kh.app.middle.apply.dto.req.SpaceApplyPermitReqDto;
+import com.kh.app.middle.apply.dto.req.SpaceApplyReqDto;
 import com.kh.app.middle.apply.dto.resp.SpaceApplyRespDto;
 import com.kh.app.middle.apply.entity.SpaceApplyEntity;
 import com.kh.app.middle.apply.repository.SpaceApplyRepository;
@@ -28,30 +30,25 @@ public class SpaceApplyService {
 
     //등록 심사 신청
     @Transactional
-    public void enroll(Long spaceId, String name) {
+    public void enroll(SpaceApplyReqDto dto, String name) {
 
-        MemberEntity member = memberRepository.findByUsername(name)
+        MemberEntity member = memberRepository.findByUsernameAndDeletedAtIsNull(name)
                 .orElseThrow(()->{
                     throw new EntityNotFoundException("[MEMBER-2005] 존재하지 않는 회원입니다.");
                 });
 
-        SpaceEntity space = spaceRepository.findByIdAndDelYn(spaceId, "N")
+        SpaceEntity space = spaceRepository.findByIdAndDelYn(dto.getSpaceId(), "N")
                 .orElseThrow(() -> {
                     throw new EntityNotFoundException("[SPACE-4001] 존재하지 않는 공간입니다.");
                 });
 
         // 중복방지신청
-        boolean alreadyApplied = spaceApplyRepository.existsPendingApply(member.getId(), spaceId);
+        boolean alreadyApplied = spaceApplyRepository.existsPendingApply(member.getId(), dto.getSpaceId());
         if(alreadyApplied){
             throw new IllegalStateException("[SPACE-4011] 동일한 정보의 신청 건이 존재합니다.");
         }
 
-        SpaceApplyEntity apply = SpaceApplyEntity.builder()
-                .seller(member)
-                .space(space)
-                .build();
-
-        spaceApplyRepository.save(apply);
+        spaceApplyRepository.save(dto.toEntity(member, space));
     }
 
 
@@ -61,5 +58,15 @@ public class SpaceApplyService {
         return spaceApplyRepository
                 .getList(pageable)
                 .map(SpaceApplyRespDto::from);
+    }
+
+    // 심사
+    public void update(Long applyId, SpaceApplyPermitReqDto dto) {
+        SpaceApplyEntity apply = spaceApplyRepository.findByIdAndDelYn(applyId, "N")
+                .orElseThrow(() -> {
+                    throw new EntityNotFoundException("[SPACE-4012] 존재하지 않는 신청 건입니다.");
+                });
+
+        spaceApplyRepository.save(apply);
     }
 }

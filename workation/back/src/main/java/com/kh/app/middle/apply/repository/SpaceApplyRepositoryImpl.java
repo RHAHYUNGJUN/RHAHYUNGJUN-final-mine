@@ -19,9 +19,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SpaceApplyRepositoryImpl implements SpaceApplyRepositoryCustom{
 
-    private final QSpaceApplyEntity q = QSpaceApplyEntity.spaceApplyEntity;
-    private final QMemberEntity m = QMemberEntity.memberEntity;
-    private final QSpaceEntity s = QSpaceEntity.spaceEntity;
+    private final static QSpaceApplyEntity q = QSpaceApplyEntity.spaceApplyEntity;
+    private final static QMemberEntity m = QMemberEntity.memberEntity;
+    private final static QSpaceEntity s = QSpaceEntity.spaceEntity;
     private final JPAQueryFactory queryFactory;
 
     @Override

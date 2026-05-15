@@ -11,13 +11,9 @@ import {
   BOARD_STAT_CARDS,
   BOARD_POSTS,
 } from '../data/adminBoardData';
-import {
-  BOARD_TABS,
-  POST_STATUS_MAP,
-} from '../data/adminBoardConstants';
+import { BOARD_TABS } from '../data/adminBoardConstants';
 import usePagination from '../hooks/usePagination';
 import AdminPagination from '../components/common/AdminPagination';
-import StatusBadge from '../components/common/StatusBadge';
 
 const TOTAL = 124;
 const TOTAL_PAGES = 3;
@@ -177,7 +173,6 @@ export default function AdminBoardPage() {
               <TH $width="280px">제목</TH>
               <TH $width="160px">작성자</TH>
               <TH $width="150px">등록일</TH>
-              <TH $width="110px">상태</TH>
               <TH $width="80px">관리</TH>
             </TR>
           </THead>
@@ -208,14 +203,6 @@ export default function AdminBoardPage() {
                   </TD>
                   <TD><AuthorText>{post.author}</AuthorText></TD>
                   <TD><DateText>{post.date}</DateText></TD>
-                  <TD>
-                    <StatusBadge
-                      $bg={POST_STATUS_MAP[post.status].bg}
-                      $color={POST_STATUS_MAP[post.status].color}
-                    >
-                      {POST_STATUS_MAP[post.status].label}
-                    </StatusBadge>
-                  </TD>
                   <TD>
                     <PinBtn
                       $pinned={pinned}

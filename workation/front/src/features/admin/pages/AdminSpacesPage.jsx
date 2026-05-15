@@ -1,30 +1,34 @@
 // src/features/admin/pages/AdminSpacesPage.jsx
 import { useState } from 'react';
 import styled from 'styled-components';
-import { Home, CheckCircle, AlertTriangle, Filter, Trash2 } from 'lucide-react';
+import { Home, CheckCircle, AlertTriangle, Filter, EyeOff } from 'lucide-react';
 import {
   SPACES_STAT_CARDS,
   SPACES_LIST,
 } from '../data/adminSpacesData';
-import {
-  SPACES_STATUS_MAP,
-} from '../data/adminSpacesConstants';
 import usePagination from '../hooks/usePagination';
 import AdminPagination from '../components/common/AdminPagination';
-import StatusBadge from '../components/common/StatusBadge';
 import ConfirmModal from '../components/common/ConfirmModal';
 
 const TOTAL = 1284;
 const TOTAL_PAGES = 12;
 
 export default function AdminSpacesPage() {
-  const { currentPage, goToPage, goToPrev, goToNext } = usePagination();
-  const [deleteTargetId, setDeleteTargetId] = useState(null);
-  const [spaces, setSpaces] = useState(SPACES_LIST);
+  const { currentPage, goToPage } = usePagination();
+  const [spaces] = useState(SPACES_LIST);
+  const [blindedIds, setBlindedIds] = useState({});
+  const [blindConfirmTarget, setBlindConfirmTarget] = useState(null);
 
-  const handleDeleteConfirm = () => {
-    setSpaces((prev) => prev.filter((s) => s.id !== deleteTargetId));
-    setDeleteTargetId(null);
+  const isBlinded = (space) => blindedIds[space.id] ?? false;
+
+  const handleBlindClick = (space) => {
+    setBlindConfirmTarget({ id: space.id, name: space.name, willBlind: !isBlinded(space) });
+  };
+
+  const handleBlindConfirm = () => {
+    if (!blindConfirmTarget) return;
+    setBlindedIds((prev) => ({ ...prev, [blindConfirmTarget.id]: blindConfirmTarget.willBlind }));
+    setBlindConfirmTarget(null);
   };
 
   return (
@@ -39,7 +43,6 @@ export default function AdminSpacesPage() {
 
       {/* ── 통계 카드 3개 ── */}
       <StatsSection>
-        {/* 카드 1: 전체 숙소 수 */}
         <StatCard>
           <StatCardTop>
             <StatIconWrap $bg="rgba(34,197,94,0.1)" $color="#16a34a">
@@ -51,7 +54,6 @@ export default function AdminSpacesPage() {
           <StatValue>1,284</StatValue>
         </StatCard>
 
-        {/* 카드 2: 운영 중인 숙소 */}
         <StatCard>
           <StatCardTop>
             <StatIconWrap $bg="rgba(59,130,246,0.1)" $color="#2563eb">
@@ -63,7 +65,6 @@ export default function AdminSpacesPage() {
           <StatValue>1,182</StatValue>
         </StatCard>
 
-        {/* 카드 3: 승인 대기 중 */}
         <StatCard>
           <StatCardTop>
             <StatIconWrap $bg="rgba(249,115,22,0.1)" $color="#ea580c">
@@ -78,7 +79,6 @@ export default function AdminSpacesPage() {
 
       {/* ── 테이블 섹션 ── */}
       <TableSection>
-        {/* 툴바 */}
         <Toolbar>
           <ToolbarLeft>
             <FilterBtn>
@@ -89,64 +89,47 @@ export default function AdminSpacesPage() {
           <TotalText>전체 {TOTAL.toLocaleString()}개 중 1-10 표시</TotalText>
         </Toolbar>
 
-        {/* 테이블 */}
         <Table>
           <THead>
             <TR>
               <TH $width="320px">숙소 이름</TH>
               <TH $width="200px">판매자</TH>
               <TH $width="130px">1박 요금</TH>
-              <TH $width="90px">상태</TH>
               <TH $width="110px">등록일</TH>
-              <TH $width="80px">관리</TH>
+              <TH $width="100px">현재상태</TH>
             </TR>
           </THead>
           <TBody>
-            {spaces.map((space) => (
-              <TR key={space.id} $hoverable>
-                {/* 숙소 이름 */}
-                <TD>
-                  <SpaceCell>
-                    <SpaceThumbnail src={space.thumbnail} alt={space.name} />
-                    <SpaceInfo>
-                      <SpaceName>{space.name}</SpaceName>
-                      <SpaceLocation>{space.location}</SpaceLocation>
-                    </SpaceInfo>
-                  </SpaceCell>
-                </TD>
-                {/* 판매자 */}
-                <TD><SellerText>{space.seller}</SellerText></TD>
-                {/* 요금 */}
-                <TD><PriceText>{space.price}</PriceText></TD>
-                {/* 상태 */}
-                <TD>
-                  <StatusBadge
-                    $bg={SPACES_STATUS_MAP[space.status].bg}
-                    $color={SPACES_STATUS_MAP[space.status].color}
-                  >
-                    {SPACES_STATUS_MAP[space.status].label}
-                  </StatusBadge>
-                </TD>
-                {/* 등록일 */}
-                <TD><DateText>{space.registeredAt}</DateText></TD>
-                {/* 관리: 삭제만 */}
-                <TD>
-                  <ActionGroup>
-                    <IconBtn
-                      $danger
-                      onClick={() => setDeleteTargetId(space.id)}
-                      title="삭제"
-                    >
-                      <TrashIcon />
-                    </IconBtn>
-                  </ActionGroup>
-                </TD>
-              </TR>
-            ))}
+            {spaces.map((space) => {
+              const blinded = isBlinded(space);
+              return (
+                <TR key={space.id} $hoverable>
+                  <TD>
+                    <SpaceCell>
+                      <SpaceThumbnail src={space.thumbnail} alt={space.name} $blinded={blinded} />
+                      <SpaceInfo>
+                        <SpaceName $blinded={blinded}>{space.name}</SpaceName>
+                        <SpaceLocation>{space.location}</SpaceLocation>
+                      </SpaceInfo>
+                    </SpaceCell>
+                  </TD>
+                  <TD><SellerText>{space.seller}</SellerText></TD>
+                  <TD><PriceText>{space.price}</PriceText></TD>
+                  <TD><DateText>{space.registeredAt}</DateText></TD>
+                  <TD>
+                    <ToggleRow onClick={() => handleBlindClick(space)}>
+                      <ToggleTrack $on={blinded}>
+                        <ToggleThumb $on={blinded} />
+                      </ToggleTrack>
+                      <ToggleLabel $on={blinded}>{blinded ? '중지' : '공개'}</ToggleLabel>
+                    </ToggleRow>
+                  </TD>
+                </TR>
+              );
+            })}
           </TBody>
         </Table>
 
-        {/* 페이지네이션 */}
         <TableFooter>
           <AdminPagination
             currentPage={currentPage}
@@ -156,22 +139,26 @@ export default function AdminSpacesPage() {
         </TableFooter>
       </TableSection>
 
-      {/* ── 삭제 확인 모달 ── */}
+      {/* ── 블라인드 확인 모달 ── */}
       <ConfirmModal
-        isOpen={deleteTargetId !== null}
-        onClose={() => setDeleteTargetId(null)}
-        onConfirm={handleDeleteConfirm}
-        title="숙소를 삭제하시겠습니까?"
-        description="삭제된 숙소는 복구할 수 없습니다."
-        isDanger={true}
-        confirmText="삭제"
-        icon={<TrashIcon size={24} color="#ef4444" />}
+        isOpen={blindConfirmTarget !== null}
+        onClose={() => setBlindConfirmTarget(null)}
+        onConfirm={handleBlindConfirm}
+        title={blindConfirmTarget?.willBlind ? '숙소를 블라인드 처리하시겠습니까?' : '블라인드를 해제하시겠습니까?'}
+        description={
+          blindConfirmTarget
+            ? blindConfirmTarget.willBlind
+              ? `${blindConfirmTarget.name} 숙소가 사용자에게 노출되지 않습니다.`
+              : `${blindConfirmTarget.name} 숙소가 다시 공개됩니다.`
+            : ''
+        }
+        isDanger={blindConfirmTarget?.willBlind}
+        confirmText={blindConfirmTarget?.willBlind ? '블라인드' : '공개하기'}
+        icon={<EyeOff size={24} color={blindConfirmTarget?.willBlind ? '#ef4444' : '#64748b'} />}
       />
     </PageWrapper>
   );
 }
-
-function TrashIcon({ size = 14, color }) { return <Trash2 size={size} color={color} />; }
 
 /* ── Icon Components ── */
 function SpaceIcon() { return <Home size={20} />; }
@@ -212,7 +199,6 @@ const PageSub = styled.p`
   color: #64748b;
 `;
 
-/* 통계 카드 */
 const StatsSection = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -281,7 +267,6 @@ const StatValue = styled.p`
   line-height: 1.2;
 `;
 
-/* 테이블 섹션 */
 const TableSection = styled.div`
   background: white;
   border: 1px solid #e2e8f0;
@@ -361,7 +346,6 @@ const TD = styled.td`
   vertical-align: middle;
 `;
 
-/* 숙소 셀 */
 const SpaceCell = styled.div`
   display: flex;
   align-items: center;
@@ -375,6 +359,8 @@ const SpaceThumbnail = styled.img`
   object-fit: cover;
   flex-shrink: 0;
   background: #f1f5f9;
+  opacity: ${({ $blinded }) => ($blinded ? 0.35 : 1)};
+  transition: opacity 0.2s;
 `;
 
 const SpaceInfo = styled.div`
@@ -386,7 +372,8 @@ const SpaceInfo = styled.div`
 const SpaceName = styled.span`
   font-size: 13px;
   font-weight: 600;
-  color: #0d1c2e;
+  color: ${({ $blinded }) => ($blinded ? '#94a3b8' : '#0d1c2e')};
+  transition: color 0.2s;
 `;
 
 const SpaceLocation = styled.span`
@@ -412,32 +399,45 @@ const DateText = styled.span`
   font-family: 'Plus Jakarta Sans', sans-serif;
 `;
 
-const ActionGroup = styled.div`
+const ToggleRow = styled.div`
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
 `;
 
-const IconBtn = styled.button`
-  width: 30px;
-  height: 30px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: ${({ $danger }) => ($danger ? '#ef4444' : '#64748b')};
-  transition: background 0.15s, color 0.15s;
-  &:hover {
-    background: ${({ $danger }) => ($danger ? '#fee2e2' : '#f1f5f9')};
-    color: ${({ $danger }) => ($danger ? '#dc2626' : '#334155')};
-  }
+const ToggleTrack = styled.div`
+  width: 40px;
+  height: 22px;
+  border-radius: 999px;
+  background: ${({ $on }) => ($on ? '#ef4444' : '#22c55e')};
+  position: relative;
+  transition: background 0.2s;
+  flex-shrink: 0;
 `;
 
-/* 페이지네이션 푸터 */
+const ToggleThumb = styled.div`
+  position: absolute;
+  top: 3px;
+  left: ${({ $on }) => ($on ? '21px' : '3px')};
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  transition: left 0.2s;
+`;
+
+const ToggleLabel = styled.span`
+  font-size: 12px;
+  font-weight: 500;
+  color: ${({ $on }) => ($on ? '#dc2626' : '#16a34a')};
+  min-width: 40px;
+`;
+
 const TableFooter = styled.div`
   padding: 16px 20px;
   border-top: 1px solid #f1f5f9;
   background: #f8fafc;
 `;
-
-/* 삭제 모달 관련 스타일 제거 */
