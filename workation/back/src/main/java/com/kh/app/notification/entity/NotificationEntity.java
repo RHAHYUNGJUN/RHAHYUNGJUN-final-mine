@@ -45,8 +45,6 @@ public class NotificationEntity {
     @Column(name = "REFERENCE_ID")
     private Long referenceId;
 
-
-
     // 알림 읽음 처리 메서드
     public void markAsRead() {
         this.readAt = LocalDateTime.now();

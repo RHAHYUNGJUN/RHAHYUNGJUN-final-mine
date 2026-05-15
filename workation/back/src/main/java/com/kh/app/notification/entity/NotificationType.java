@@ -19,9 +19,9 @@ public enum NotificationType {
 
     REVIEW_REQUEST("리뷰 요청"),
 
-    PRODUCT_PENDING("상품 심사 대기"),
-    PRODUCT_APPROVED("상품 승인"),
-    PRODUCT_REJECTED("상품 반려"),;
+    SPACE_PENDING("상품 심사 대기"),
+    SPACE_APPROVED("상품 승인"),
+    SPACE_REJECTED("상품 반려"),;
 
     private final String description;
 }
