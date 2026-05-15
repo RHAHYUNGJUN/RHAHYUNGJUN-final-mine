@@ -1,7 +1,7 @@
 // src/features/admin/pages/AdminSpacesPage.jsx
 import { useState } from 'react';
 import styled from 'styled-components';
-import { Home, CheckCircle, AlertTriangle, Filter, EyeOff } from 'lucide-react';
+import { Home, CheckCircle, AlertTriangle, Filter, EyeOff, X } from 'lucide-react';
 import {
   SPACES_STAT_CARDS,
   SPACES_LIST,
@@ -13,11 +13,41 @@ import ConfirmModal from '../components/common/ConfirmModal';
 const TOTAL = 1284;
 const TOTAL_PAGES = 12;
 
+const INITIAL_PENDING = [
+  {
+    id: 101,
+    name: '남해 힐링 펜션',
+    location: '경상남도 남해군',
+    seller: '남해바다사랑',
+    price: '₩120,000',
+    registeredAt: '2023.11.20',
+    thumbnail: 'https://images.unsplash.com/photo-1587061949409-02df41d5e562?w=80&h=60&fit=crop',
+    status: 'pending'
+  },
+  {
+    id: 102,
+    name: '부산 해운대 요트 스테이',
+    location: '부산광역시 해운대구',
+    seller: '요트클럽부산',
+    price: '₩450,000',
+    registeredAt: '2023.11.21',
+    thumbnail: 'https://images.unsplash.com/photo-1544376798-89aa6b82c6cd?w=80&h=60&fit=crop',
+    status: 'pending'
+  }
+];
+
 export default function AdminSpacesPage() {
   const { currentPage, goToPage } = usePagination();
-  const [spaces] = useState(SPACES_LIST);
+  const [spaces, setSpaces] = useState(SPACES_LIST);
   const [blindedIds, setBlindedIds] = useState({});
   const [blindConfirmTarget, setBlindConfirmTarget] = useState(null);
+
+  // 승인 대기 / 거절 관련 상태
+  const [pendingSpaces, setPendingSpaces] = useState(INITIAL_PENDING);
+  const [rejectedSpaces, setRejectedSpaces] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalTab, setModalTab] = useState('pending'); // 'pending' | 'rejected'
+  const [selectedIds, setSelectedIds] = useState([]);
 
   const isBlinded = (space) => blindedIds[space.id] ?? false;
 
@@ -30,6 +60,41 @@ export default function AdminSpacesPage() {
     setBlindedIds((prev) => ({ ...prev, [blindConfirmTarget.id]: blindConfirmTarget.willBlind }));
     setBlindConfirmTarget(null);
   };
+
+  const toggleSelect = (id) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+
+  const handleApproveSelected = () => {
+    const listToProcess = modalTab === 'pending' ? pendingSpaces : rejectedSpaces;
+    const toApprove = listToProcess.filter(s => selectedIds.includes(s.id));
+    
+    // 승인된 항목들을 메인 리스트로 이동
+    setSpaces(prev => [...toApprove.map(s => ({ ...s, status: 'active' })), ...prev]);
+    
+    // 기존 리스트에서 제거
+    if (modalTab === 'pending') {
+      setPendingSpaces(prev => prev.filter(s => !selectedIds.includes(s.id)));
+    } else {
+      setRejectedSpaces(prev => prev.filter(s => !selectedIds.includes(s.id)));
+    }
+    
+    setSelectedIds([]);
+  };
+
+  const handleRejectSelected = () => {
+    if (modalTab !== 'pending') return;
+    
+    const toReject = pendingSpaces.filter(s => selectedIds.includes(s.id));
+    
+    // 거절 리스트로 이동
+    setRejectedSpaces(prev => [...toReject, ...prev]);
+    setPendingSpaces(prev => prev.filter(s => !selectedIds.includes(s.id)));
+    
+    setSelectedIds([]);
+  };
+
+  const currentModalList = modalTab === 'pending' ? pendingSpaces : rejectedSpaces;
 
   return (
     <PageWrapper>
@@ -59,13 +124,13 @@ export default function AdminSpacesPage() {
             <StatIconWrap $bg="rgba(59,130,246,0.1)" $color="#2563eb">
               <CheckCircleIcon />
             </StatIconWrap>
-            <StatBadge $color="blue">92% 운영 중</StatBadge>
+            <StatBadge $color="blue">{Math.round((spaces.length / TOTAL) * 100)}% 운영 중</StatBadge>
           </StatCardTop>
           <StatLabel>운영 중인 숙소</StatLabel>
-          <StatValue>1,182</StatValue>
+          <StatValue>{spaces.length.toLocaleString()}</StatValue>
         </StatCard>
 
-        <StatCard>
+        <StatCard style={{ cursor: 'pointer' }} onClick={() => setIsModalOpen(true)}>
           <StatCardTop>
             <StatIconWrap $bg="rgba(249,115,22,0.1)" $color="#ea580c">
               <AlertIcon />
@@ -73,7 +138,7 @@ export default function AdminSpacesPage() {
             <StatBadge $color="orange">조치 필요</StatBadge>
           </StatCardTop>
           <StatLabel>승인 대기 중</StatLabel>
-          <StatValue>24</StatValue>
+          <StatValue>{pendingSpaces.length}</StatValue>
         </StatCard>
       </StatsSection>
 
@@ -156,6 +221,85 @@ export default function AdminSpacesPage() {
         confirmText={blindConfirmTarget?.willBlind ? '블라인드' : '공개하기'}
         icon={<EyeOff size={24} color={blindConfirmTarget?.willBlind ? '#ef4444' : '#64748b'} />}
       />
+
+      {/* ── 승인/거절 모달 ── */}
+      {isModalOpen && (
+        <ModalOverlay onClick={() => setIsModalOpen(false)}>
+          <ModalContent onClick={e => e.stopPropagation()}>
+            <ModalHeader>
+              <ModalTitle>숙소 승인 관리</ModalTitle>
+              <ModalCloseBtn onClick={() => setIsModalOpen(false)}>
+                <X size={20} />
+              </ModalCloseBtn>
+            </ModalHeader>
+            <ModalTabs>
+              <ModalTab 
+                $active={modalTab === 'pending'} 
+                onClick={() => { setModalTab('pending'); setSelectedIds([]); }}
+              >
+                승인 대기 리스트
+              </ModalTab>
+              <ModalTab 
+                $active={modalTab === 'rejected'} 
+                onClick={() => { setModalTab('rejected'); setSelectedIds([]); }}
+              >
+                거절 리스트
+              </ModalTab>
+            </ModalTabs>
+            <ModalBody>
+              {currentModalList.length === 0 ? (
+                <EmptyState>해당하는 숙소가 없습니다.</EmptyState>
+              ) : (
+                <ApprovalList>
+                  {currentModalList.map(space => (
+                    <ApprovalItem key={space.id}>
+                      <Checkbox 
+                        type="checkbox" 
+                        checked={selectedIds.includes(space.id)}
+                        onChange={() => toggleSelect(space.id)}
+                      />
+                      <SpaceThumbnail src={space.thumbnail} alt={space.name} $blinded={false} />
+                      <SpaceInfo>
+                        <SpaceName $blinded={false}>{space.name}</SpaceName>
+                        <SpaceLocation>{space.location} · {space.seller}</SpaceLocation>
+                      </SpaceInfo>
+                    </ApprovalItem>
+                  ))}
+                </ApprovalList>
+              )}
+            </ModalBody>
+            <ModalFooter>
+              <StatusText>{selectedIds.length}개 선택됨</StatusText>
+              <ButtonGroup>
+                {modalTab === 'pending' && (
+                  <>
+                    <RejectBtn 
+                      onClick={handleRejectSelected}
+                      disabled={selectedIds.length === 0}
+                    >
+                      선택 거절
+                    </RejectBtn>
+                    <ApproveBtn 
+                      onClick={handleApproveSelected}
+                      disabled={selectedIds.length === 0}
+                    >
+                      선택 승인
+                    </ApproveBtn>
+                  </>
+                )}
+                {modalTab === 'rejected' && (
+                  <ApproveBtn 
+                    onClick={handleApproveSelected}
+                    disabled={selectedIds.length === 0}
+                  >
+                    선택 승인 (재검토)
+                  </ApproveBtn>
+                )}
+              </ButtonGroup>
+            </ModalFooter>
+          </ModalContent>
+        </ModalOverlay>
+      )}
     </PageWrapper>
   );
 }
@@ -440,4 +584,154 @@ const TableFooter = styled.div`
   padding: 16px 20px;
   border-top: 1px solid #f1f5f9;
   background: #f8fafc;
+`;
+
+/* ── Modal Styled Components ── */
+
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const ModalContent = styled.div`
+  background: white;
+  width: 500px;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+`;
+
+const ModalHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+`;
+
+const ModalTitle = styled.h2`
+  font-size: 18px;
+  font-weight: 600;
+  color: #0d1c2e;
+`;
+
+const ModalCloseBtn = styled.button`
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+  &:hover { color: #475569; }
+`;
+
+const ModalTabs = styled.div`
+  display: flex;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+`;
+
+const ModalTab = styled.button`
+  flex: 1;
+  padding: 14px 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: ${({ $active }) => ($active ? '#2563eb' : '#64748b')};
+  border-bottom: 2px solid ${({ $active }) => ($active ? '#2563eb' : 'transparent')};
+  transition: all 0.2s;
+  &:hover {
+    color: ${({ $active }) => ($active ? '#2563eb' : '#334155')};
+  }
+`;
+
+const ModalBody = styled.div`
+  padding: 20px 24px;
+  max-height: 400px;
+  overflow-y: auto;
+`;
+
+const EmptyState = styled.div`
+  padding: 40px 0;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 14px;
+`;
+
+const ApprovalList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const ApprovalItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  transition: background 0.2s;
+  &:hover { background: #f8fafc; }
+`;
+
+const Checkbox = styled.input`
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #2563eb;
+`;
+
+const ModalFooter = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+`;
+
+const StatusText = styled.span`
+  font-size: 13px;
+  color: #64748b;
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+const ActionBtn = styled.button`
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const RejectBtn = styled(ActionBtn)`
+  background: white;
+  color: #ef4444;
+  border: 1px solid #ef4444;
+  &:not(:disabled):hover {
+    background: #fef2f2;
+  }
+`;
+
+const ApproveBtn = styled(ActionBtn)`
+  background: #2563eb;
+  color: white;
+  border: 1px solid #2563eb;
+  &:not(:disabled):hover {
+    background: #1d4ed8;
+  }
 `;

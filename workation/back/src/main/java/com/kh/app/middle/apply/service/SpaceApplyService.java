@@ -9,11 +9,14 @@ import com.kh.app.middle.apply.entity.SpaceApplyEntity;
 import com.kh.app.middle.apply.repository.SpaceApplyRepository;
 import com.kh.app.product.space.entity.SpaceEntity;
 import com.kh.app.product.space.repository.SpaceRepository;
+import com.kh.app.security.user.CustomUserDetails;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,9 +57,16 @@ public class SpaceApplyService {
 
     // 신청 건 목록조회
     public Page<SpaceApplyRespDto> getApplyList(int pno) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+
+        Long memberId = userDetails.getUserVo().getId();
+        boolean isAdmin = userDetails.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ADMIN"));
+
         Pageable pageable = PageRequest.of(pno, 10);
         return spaceApplyRepository
-                .getList(pageable)
+                .getList(pageable, memberId, isAdmin)
                 .map(SpaceApplyRespDto::from);
     }
 
@@ -67,6 +77,16 @@ public class SpaceApplyService {
                     throw new EntityNotFoundException("[SPACE-4012] 존재하지 않는 신청 건입니다.");
                 });
 
-        spaceApplyRepository.save(apply);
+
+        if(dto.getApplyStatus().equals("A")){
+            //승인ㅔ
+            apply.update(dto);
+            // 노출여부 변경필요
+
+        }else if(dto.getApplyStatus().equals("R")){
+            //거절
+            apply.update(dto);
+        }
+
     }
 }

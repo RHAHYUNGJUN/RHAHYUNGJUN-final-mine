@@ -1,24 +1,10 @@
 // src/features/admin/components/dashboard/AdminHeader.jsx
-import { useState } from 'react';
 import styled from 'styled-components';
-import { Search } from 'lucide-react';
 
 export default function AdminHeader() {
-  const [search, setSearch] = useState('');
-
   return (
     <Header>
-      {/* 검색 */}
-      <SearchWrap>
-        <SearchIconWrap>
-          <Search size={13.5} color="#6b7280" />
-        </SearchIconWrap>
-        <SearchInput
-          placeholder="분석 검색 또는 예약 관리..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </SearchWrap>
+      <div />
 
       {/* 우측 */}
       <Right>
@@ -50,36 +36,6 @@ const Header = styled.header`
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-`;
-
-const SearchWrap = styled.div`
-  position: relative;
-  width: 384px;
-`;
-
-const SearchIconWrap = styled.div`
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-`;
-
-const SearchInput = styled.input`
-  width: 100%;
-  padding: 8px 16px 8px 40px;
-  background: ${({ theme }) => theme.colors.bgSection};
-  border: none;
-  border-radius: 12px;
-  font-size: 13px;
-  color: ${({ theme }) => theme.colors.adminTextDark};
-  font-family: inherit;
-  outline: none;
-
-  &::placeholder {
-    color: ${({ theme }) => theme.colors.textMuted};
-  }
 `;
 
 const Right = styled.div`
@@ -125,5 +81,4 @@ const AdminAvatar = styled.div`
   font-size: 14px;
   font-weight: 500;
   color: ${({ theme }) => theme.colors.white};
-  cursor: pointer;
 `;
