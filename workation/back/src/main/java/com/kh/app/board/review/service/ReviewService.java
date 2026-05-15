@@ -36,15 +36,19 @@ public class ReviewService {
     private final CommentRepository commentRepository;
     private final MemberRepository memberRepository;
 
-    // 목록 조회 (페이징: 한 페이지에 10개)
+    // 목록 조회 (페이징: 한 페이지에 10개, 이미지 포함)
     @Transactional(readOnly = true)
     public Page<ReviewListRespDto> findAll(int page) {
         Pageable pageable = PageRequest.of(page, 10);
         return reviewRepository.findAllByDelYnOrderByCreatedAtDesc("N", pageable)
-                .map(ReviewListRespDto::from);
+                .map(review -> {
+                    List<ReviewImageEntity> images =
+                            reviewImageRepository.findAllByReviewIdAndDelYn(review.getId(), "N");
+                    return ReviewListRespDto.from(review, images);
+                });
     }
 
-    // 상세 조회
+    // 상세 조회 (수정 페이지에서 기존 데이터 불러올 때 사용)
     @Transactional(readOnly = true)
     public ReviewRespDto findById(Long id) {
         ReviewEntity review = reviewRepository.findByIdAndDelYn(id, "N")
@@ -80,16 +84,14 @@ public class ReviewService {
                 .orElseThrow(() -> new IllegalArgumentException("후기를 찾을 수 없습니다."));
         review.update(dto.getTitle(), dto.getContent(), dto.getTag(), dto.getRating());
 
-        // 새 이미지가 있으면 기존 이미지 소프트삭제 후 새로 저장
         if (images != null && !images.isEmpty()) {
             reviewImageRepository.findAllByReviewIdAndDelYn(id, "N")
                     .forEach(ReviewImageEntity::delete);
-
             for (MultipartFile image : images) {
                 ReviewImageEntity reviewImage = ReviewImageEntity.builder()
                         .review(review)
                         .originalFileName(image.getOriginalFilename())
-                        .s3Key(image.getOriginalFilename()) // S3 연동 시 실제 key로 교체
+                        .s3Key(image.getOriginalFilename())
                         .build();
                 reviewImageRepository.save(reviewImage);
             }
@@ -105,28 +107,22 @@ public class ReviewService {
 
     // ── 댓글 ──────────────────────────────────────────────────────────────────
 
-    // 댓글 목록 조회
     @Transactional(readOnly = true)
     public List<CommentRespDto> findComments(Long reviewId) {
         return commentRepository.findAllByReviewIdAndDelYnOrderByCreatedAtAsc(reviewId, "N")
-                .stream()
-                .map(CommentRespDto::from)
-                .toList();
+                .stream().map(CommentRespDto::from).toList();
     }
 
-    // 댓글 등록
     public Long createComment(Long reviewId, CommentCreateReqDto dto, Long memberId) {
         ReviewEntity review = reviewRepository.findByIdAndDelYn(reviewId, "N")
                 .orElseThrow(() -> new IllegalArgumentException("후기를 찾을 수 없습니다."));
         MemberEntity member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("member not found"));
-
         CommentEntity comment = dto.toEntity(review, member);
         commentRepository.save(comment);
         return comment.getId();
     }
 
-    // 댓글 삭제 (소프트 삭제)
     public void deleteComment(Long commentId) {
         CommentEntity comment = commentRepository.findByIdAndDelYn(commentId, "N")
                 .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
