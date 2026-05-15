@@ -29,10 +29,13 @@ export default function AdminBoardPage() {
     // 초기 고정 상태: isFixed=true 인 항목들
     const ids = [];
     Object.values(BOARD_POSTS).forEach((posts) =>
-      posts.forEach((p) => { if (p.isFixed) ids.push(p.id); })
+      posts.forEach((p) => {
+        if (p.isFixed) ids.push(p.id);
+      })
     );
     return ids;
   });
+
   const { currentPage, goToPage, goToPrev, goToNext, reset: resetPage } = usePagination();
 
   const posts = BOARD_POSTS[activeTab] || [];
@@ -54,10 +57,15 @@ export default function AdminBoardPage() {
     );
   };
 
-  const handlePin = (id) => {
+  // 핀 토글
+  const togglePin = (id) => {
     setPinnedIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
+  };
+
+  const handlePin = (id) => {
+    togglePin(id);
   };
 
   const handleTabChange = (tab) => {
@@ -166,19 +174,17 @@ export default function AdminBoardPage() {
                   onChange={handleAllCheck}
                 />
               </TH>
-              <TH>제목</TH>
-              <TH $width="100px">작성자</TH>
-              <TH $width="110px">등록일</TH>
-              <TH $width="80px">조회수</TH>
-              <TH $width="90px">상태</TH>
-              <TH $width="56px">관리</TH>
+              <TH $width="280px">제목</TH>
+              <TH $width="160px">작성자</TH>
+              <TH $width="150px">등록일</TH>
+              <TH $width="110px">상태</TH>
+              <TH $width="80px">관리</TH>
             </TR>
           </THead>
           <TBody>
             {posts.map((post) => {
               const checked = checkedIds.includes(post.id);
               const pinned = pinnedIds.includes(post.id);
-              const isDraft = post.status === 'draft';
 
               return (
                 <TR key={post.id} $hoverable $checked={checked}>
@@ -192,7 +198,7 @@ export default function AdminBoardPage() {
                   <TD>
                     <TitleCell>
                       {post.isFixed && <FixedBadge>필독</FixedBadge>}
-                      <TitleText $isDraft={isDraft}>
+                      <TitleText>
                         {post.title}
                       </TitleText>
                       {post.hasAttachment && (
@@ -202,7 +208,6 @@ export default function AdminBoardPage() {
                   </TD>
                   <TD><AuthorText>{post.author}</AuthorText></TD>
                   <TD><DateText>{post.date}</DateText></TD>
-                  <TD><ViewsText>{post.views.toLocaleString()}</ViewsText></TD>
                   <TD>
                     <StatusBadge
                       $bg={POST_STATUS_MAP[post.status].bg}
@@ -530,7 +535,7 @@ const TR = styled.tr`
   }
 `;
 const TH = styled.th`
-  padding: 11px 16px;
+  padding: 11px 20px;
   text-align: left;
   font-size: 12px;
   font-weight: 600;
@@ -540,7 +545,7 @@ const TH = styled.th`
   white-space: nowrap;
 `;
 const TD = styled.td`
-  padding: 14px 16px;
+  padding: 14px 20px;
   vertical-align: middle;
 `;
 
@@ -568,7 +573,7 @@ const FixedBadge = styled.span`
 `;
 const TitleText = styled.span`
   font-size: 13px;
-  color: ${({ $isDraft, theme }) => ($isDraft ? theme.colors.textLight : theme.colors.adminTextDark)};
+  color: ${({ theme }) => theme.colors.adminTextDark};
   font-weight: 500;
   line-height: 1.4;
 `;
@@ -581,12 +586,6 @@ const DateText = styled.span`
   color: ${({ theme }) => theme.colors.textLight};
   font-family: ${({ theme }) => theme.fonts.number};
 `;
-const ViewsText = styled.span`
-  font-size: 12px;
-  color: ${({ theme }) => theme.colors.textMid};
-  font-family: ${({ theme }) => theme.fonts.number};
-`;
-
 /* 핀 버튼 */
 const PinBtn = styled.button`
   width: 32px;

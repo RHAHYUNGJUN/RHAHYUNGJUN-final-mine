@@ -36,7 +36,7 @@ public class SpaceApplyAPiController {
             @RequestBody SpaceApplyPermitReqDto dto  // status만 담겨있음
     ) {
 //         applyId로 SPACE_APPLY 조회 → spaceId는 서비스에서 꺼냄
-//        spaceApplyService.create(applyId, dto);
+        spaceApplyService.create(applyId, dto);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 

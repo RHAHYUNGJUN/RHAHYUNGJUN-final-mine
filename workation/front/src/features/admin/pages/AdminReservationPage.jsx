@@ -106,7 +106,7 @@ export default function AdminReservationPage() {
                   <SpaceName>{row.spaceName}</SpaceName>
                 </TD>
                 <TD>
-                  <DateText>{row.date.replace('\\n', '\n')}</DateText>
+                  <DateText>{row.date.replace(/\\n/g, ' ~ ')}</DateText>
                 </TD>
                 <TD>
                   <AmountText>{row.amount}</AmountText>
@@ -466,8 +466,7 @@ const DateText = styled.span`
   font-size: 12px;
   color: ${({ theme }) => theme.colors.textMuted};
   font-family: ${({ theme }) => theme.fonts.number};
-  white-space: pre-line;
-  line-height: 1.5;
+  white-space: nowrap;
 `;
 
 const AmountText = styled.span`
