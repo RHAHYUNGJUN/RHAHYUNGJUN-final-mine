@@ -23,7 +23,7 @@ public class NotificationRespDto {
 
     private String content;
 
-    private boolean isRead;
+    private boolean read;
 
     private LocalDateTime readAt;
 
@@ -41,7 +41,7 @@ public class NotificationRespDto {
                 .type(entity.getType())
                 .typeDescription(entity.getType().getDescription())
                 .content(entity.getContent())
-                .isRead(entity.getReadAt() != null)
+                .read(entity.getReadAt() != null)
                 .readAt(entity.getReadAt())
                 .createdAt(entity.getCreatedAt())
                 .redirectUrl(entity.getRedirectUrl())
