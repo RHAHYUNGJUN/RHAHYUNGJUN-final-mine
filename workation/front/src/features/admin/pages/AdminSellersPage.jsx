@@ -26,6 +26,7 @@ import {
 import usePagination from '../hooks/usePagination';
 import AdminPagination from '../components/common/AdminPagination';
 import ConfirmModal from '../components/common/ConfirmModal';
+import AdminSearchInput from '../components/common/AdminSearchInput';
 import SellersStatCards from '../components/dashboard/SellersStatCards';
 import SellersTable from '../components/dashboard/SellersTable';
 import CustomersTable from '../components/dashboard/CustomersTable';
@@ -33,6 +34,7 @@ import CustomersTable from '../components/dashboard/CustomersTable';
 export default function AdminSellersPage() {
   const [view, setView] = useState('customer'); // 'customer' | 'seller'
   const [filter, setFilter] = useState('전체');
+  const [searchQuery, setSearchQuery] = useState('');
   const {
     currentPage,
     goToPage,
@@ -93,6 +95,7 @@ export default function AdminSellersPage() {
   const handleViewChange = (v) => {
     setView(v);
     setFilter('전체');
+    setSearchQuery('');
     resetPage();
   };
 
@@ -102,13 +105,17 @@ export default function AdminSellersPage() {
     if (filter === '정지됨') return isSellerSuspended(s);
     if (filter === '신규') return isNewMember(s.joinedAt);
     return true;
-  });
+  }).filter((s) =>
+    !searchQuery || s.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
   const filteredCustomers = CUSTOMER_LIST.filter((c) => {
     if (filter === '활동 중') return !isCustomerSuspended(c);
     if (filter === '정지됨') return isCustomerSuspended(c);
     if (filter === '신규') return isNewMember(c.joinDate);
     return true;
-  });
+  }).filter((c) =>
+    !searchQuery || c.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const TOTAL = view === 'seller' ? 1284 : 8420;
 
@@ -157,6 +164,12 @@ export default function AdminSellersPage() {
           <TableTitle>
             {view === 'seller' ? '전체 판매자 목록' : '전체 고객 목록'}
           </TableTitle>
+          <AdminSearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder={view === 'seller' ? '판매자 이름 검색...' : '고객 이름 검색...'}
+            width="220px"
+          />
         </TableHeader>
 
         {view === 'seller' ? (

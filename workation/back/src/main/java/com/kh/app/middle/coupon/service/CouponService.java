@@ -1,10 +1,14 @@
 package com.kh.app.middle.coupon.service;
 
 import com.kh.app.middle.coupon.dto.request.CouponCreateDto;
+import com.kh.app.middle.coupon.dto.response.CouponRespDto;
 import com.kh.app.middle.coupon.entity.CouponEntity;
 import com.kh.app.middle.coupon.repository.CouponRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,5 +60,10 @@ public class CouponService {
         LocalDateTime couponExiredDate = updateExpriedDate(couponCreateDto.getExpriedDate());
         CouponEntity entity = couponRepository.findById(couponId).orElseThrow(EntityNotFoundException::new);
         entity.update(couponCreateDto, couponExiredDate);
+    }
+
+    public Page<CouponRespDto> getList(int pno) {
+        Pageable pageable = PageRequest.of(pno, 10);
+        return couponRepository.getList(pageable).map(CouponRespDto::from);
     }
 }

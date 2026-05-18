@@ -1,8 +1,10 @@
 package com.kh.app.middle.coupon.controller;
 
 import com.kh.app.middle.coupon.dto.request.CouponCreateDto;
+import com.kh.app.middle.coupon.dto.response.CouponRespDto;
 import com.kh.app.middle.coupon.service.CouponService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,25 +26,26 @@ public class CouponApiController {
 
     //쿠폰 리스트 조회
     @GetMapping
-    public void list(){
-
+    public ResponseEntity<Page<CouponRespDto>> list(@RequestParam(defaultValue = "0") int pno){
+        Page<CouponRespDto> couponList = couponService.getList(pno);
+        return ResponseEntity.ok(couponList);
     }
 
     //쿠폰을 사용자에게 등록 (이벤트페이지에서)
-    @PostMapping("{id}")
+    @PostMapping("{couponId}")
     public void register(@PathVariable Long couponId){
 
     }
 
     // 쿠폰 수정
-    @PutMapping("{id}")
+    @PutMapping("{couponId}")
     public ResponseEntity<Void> update(@PathVariable Long couponId, @RequestBody CouponCreateDto couponCreateDto){
         couponService.update(couponId, couponCreateDto);
         return ResponseEntity.ok().build();
     }
 
     // 쿠폰 비활성화
-    @DeleteMapping("{id}")
+    @DeleteMapping("{couponId}")
     public ResponseEntity<Void> disable(@PathVariable Long couponId){
         couponService.delete(couponId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();

@@ -7,8 +7,8 @@ import {
   Percent,
   TrendingUp,
   AlertTriangle,
-  Filter,
 } from 'lucide-react';
+import AdminSearchInput from '../components/common/AdminSearchInput';
 import {
   SALES_STAT_CARDS,
   MONTHLY_CHART_DATA,
@@ -25,6 +25,14 @@ import StatusBadge from '../components/common/StatusBadge';
 const MAX_COUNT = Math.max(...MONTHLY_CHART_DATA.map((d) => d.count));
 
 export default function AdminSalesPage() {
+  const [pendingSearch, setPendingSearch] = useState('');
+
+  const filteredPending = PENDING_LIST.filter((row) =>
+    !pendingSearch ||
+    row.seller.toLowerCase().includes(pendingSearch.toLowerCase()) ||
+    row.id.toLowerCase().includes(pendingSearch.toLowerCase())
+  );
+
   return (
     <PageWrapper>
       {/* ── 헤더 ── */}
@@ -155,15 +163,17 @@ export default function AdminSalesPage() {
       <PendingSection>
         <PendingHeader>
           <PendingTitle>정산 대기 목록</PendingTitle>
-          <PendingCount>총 18건의 대기 중인 항목이 있습니다.</PendingCount>
+          <AdminSearchInput
+            value={pendingSearch}
+            onChange={setPendingSearch}
+            placeholder="거래처명 / ID 검색..."
+            width="220px"
+          />
         </PendingHeader>
 
         <PendingTable>
           <PTHead>
             <PTR>
-              <PTH $width="32px">
-                <PinIconSmall />
-              </PTH>
               <PTH>ID</PTH>
               <PTH>거래처명</PTH>
               <PTH>정산 요청일</PTH>
@@ -173,11 +183,14 @@ export default function AdminSalesPage() {
             </PTR>
           </PTHead>
           <PTBody>
-            {PENDING_LIST.map((row) => (
-              <PTR key={row.id} $hoverable>
-                <PTD>
-                  <RowDotIcon />
+            {filteredPending.length === 0 ? (
+              <PTR>
+                <PTD colSpan={6}>
+                  <EmptyPending>검색 결과가 없습니다.</EmptyPending>
                 </PTD>
+              </PTR>
+            ) : filteredPending.map((row) => (
+              <PTR key={row.id} $hoverable>
                 <PTD>
                   <PendingId>{row.id}</PendingId>
                 </PTD>
@@ -257,27 +270,6 @@ function DateDot() {
         verticalAlign: 'middle',
       }}
     />
-  );
-}
-function PinIconSmall() {
-  return <Filter size={12} color="#94a3b8" />;
-}
-function RowDotIcon() {
-  return (
-    <span style={{ display: 'flex', gap: 2 }}>
-      {[0, 1].map((i) => (
-        <span
-          key={i}
-          style={{
-            width: 3,
-            height: 3,
-            borderRadius: '50%',
-            background: '#cbd5e1',
-            display: 'block',
-          }}
-        />
-      ))}
-    </span>
   );
 }
 
@@ -738,6 +730,13 @@ const ApprovalBtn = styled.button`
   &:hover {
     opacity: 0.85;
   }
+`;
+
+const EmptyPending = styled.div`
+  padding: 40px 0;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 14px;
 `;
 
 const ViewAllRow = styled.div`
