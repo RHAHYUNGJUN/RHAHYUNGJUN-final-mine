@@ -2,3 +2,4 @@
 CLAUDE.md
 .claude/
 **/application-private.properties
+**/application.properties
