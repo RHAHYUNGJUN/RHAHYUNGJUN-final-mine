@@ -148,4 +148,11 @@ public class MemberService {
         }
         member.ban();
     }
+
+    @Transactional
+    public void unbanMember(Long id) {
+        MemberEntity member = memberRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("회원 없음"));
+        member.unban();
+    }
 }

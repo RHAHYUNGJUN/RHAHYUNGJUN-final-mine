@@ -55,3 +55,9 @@ export async function banMember(memberId) {
     const resp = await api.patch(`/admin/member/${memberId}/ban`);
     return resp;
 }
+// ===== 관리자 회원 밴 해제=====
+export async function unbanMember(memberId) {
+    const resp = await api.patch(`/admin/member/${memberId}/unban`);
+    return resp;
+}
+

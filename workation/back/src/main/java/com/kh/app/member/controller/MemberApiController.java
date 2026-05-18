@@ -80,6 +80,11 @@ public class MemberApiController {
         memberService.banMember(memberId);
         return ResponseEntity.ok().build();
     }
+    @PatchMapping("/admin/member/{memberId}/unban")
+    public ResponseEntity<Void> unbanMember(@PathVariable Long memberId){
+        memberService.unbanMember(memberId);
+        return ResponseEntity.ok().build();
+    }
 
 
 
