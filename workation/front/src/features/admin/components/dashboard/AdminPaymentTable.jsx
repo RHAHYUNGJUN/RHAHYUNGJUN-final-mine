@@ -1,8 +1,8 @@
 // src/features/admin/components/dashboard/AdminPaymentTable.jsx
 import { useState } from 'react';
 import styled from 'styled-components';
-import { Filter } from 'lucide-react';
 import AdminPagination from '../common/AdminPagination';
+import AdminSearchInput from '../common/AdminSearchInput';
 import StatusBadge from '../common/StatusBadge';
 import { RECENT_PAYMENTS } from '../../data/adminDashboardData';
 import { PAYMENT_STATUS_MAP } from '../../data/adminDashboardConstants';
@@ -12,6 +12,14 @@ const TOTAL_PAGES = 3;
 
 export default function AdminPaymentTable() {
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filtered = RECENT_PAYMENTS.filter((row) =>
+    !searchQuery ||
+    row.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    row.buyer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    row.product.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <TableSection>
@@ -20,12 +28,12 @@ export default function AdminPaymentTable() {
           <TableTitle>최근 결제 내역</TableTitle>
           <TableSub>실시간 주문 및 거래 현황</TableSub>
         </HeaderLeft>
-        <HeaderRight>
-          <DotsBtn aria-label="더보기">···</DotsBtn>
-          <FilterBtn aria-label="필터">
-            <FilterIcon />
-          </FilterBtn>
-        </HeaderRight>
+        <AdminSearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="주문번호 / 구매자 / 상품명..."
+          width="240px"
+        />
       </TableHeader>
 
       <Table>
@@ -40,7 +48,7 @@ export default function AdminPaymentTable() {
           </TR>
         </THead>
         <TBody>
-          {RECENT_PAYMENTS.map((row) => (
+          {filtered.map((row) => (
             <TR key={row.id} $hoverable>
               <TD><OrderId>{row.id}</OrderId></TD>
               <TD><BuyerText>{row.buyer}</BuyerText></TD>
@@ -73,8 +81,6 @@ export default function AdminPaymentTable() {
   );
 }
 
-
-function FilterIcon() { return <Filter size={14} color="#64748b" />; }
 
 /* ── Styled Components ── */
 
@@ -111,33 +117,6 @@ const TableSub = styled.p`
   color: #64748b;
 `;
 
-const HeaderRight = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const DotsBtn = styled.button`
-  color: #94a3b8;
-  font-size: 18px;
-  letter-spacing: 1px;
-  padding: 4px 6px;
-  border-radius: 4px;
-  transition: background 0.15s;
-  &:hover { background: #f1f5f9; }
-`;
-
-const FilterBtn = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 1px solid #e2e8f0;
-  border-radius: 4px;
-  transition: background 0.15s;
-  &:hover { background: #f8fafc; }
-`;
 
 const Table = styled.table`
   width: 100%;

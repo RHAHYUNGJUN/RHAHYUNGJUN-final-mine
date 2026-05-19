@@ -2,12 +2,8 @@
 import api from './../../../../app/api/axios';
 
 // 예약 등록
-export async function createReservation(formData) {
-  return await api.post(`/user/reservation`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
+export async function createReservation(stayId, formData) {
+  return await api.post(`/user/reservation/${stayId}`, formData);
 }
 
 // 예약 목록 조회

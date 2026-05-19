@@ -7,8 +7,8 @@ import {
   Percent,
   TrendingUp,
   AlertTriangle,
-  Filter,
 } from 'lucide-react';
+import AdminSearchInput from '../components/common/AdminSearchInput';
 import {
   SALES_STAT_CARDS,
   MONTHLY_CHART_DATA,
@@ -25,6 +25,14 @@ import StatusBadge from '../components/common/StatusBadge';
 const MAX_COUNT = Math.max(...MONTHLY_CHART_DATA.map((d) => d.count));
 
 export default function AdminSalesPage() {
+  const [pendingSearch, setPendingSearch] = useState('');
+
+  const filteredPending = PENDING_LIST.filter((row) =>
+    !pendingSearch ||
+    row.seller.toLowerCase().includes(pendingSearch.toLowerCase()) ||
+    row.id.toLowerCase().includes(pendingSearch.toLowerCase())
+  );
+
   return (
     <PageWrapper>
       {/* ── 헤더 ── */}
@@ -43,10 +51,6 @@ export default function AdminSalesPage() {
             <StatIconWrap $bg="rgba(34,197,94,0.1)" $color="#16a34a">
               <WalletIcon />
             </StatIconWrap>
-            <StatTrendRow>
-              <TrendUp />
-              <TrendText>+8.4%</TrendText>
-            </StatTrendRow>
           </StatCardTop>
           <StatLabel>{SALES_STAT_CARDS[0].label}</StatLabel>
           <StatValue>{SALES_STAT_CARDS[0].value}</StatValue>
@@ -61,9 +65,6 @@ export default function AdminSalesPage() {
           </StatCardTop>
           <StatLabel>{SALES_STAT_CARDS[1].label}</StatLabel>
           <StatValue>{SALES_STAT_CARDS[1].value}</StatValue>
-          <ProgressWrap>
-            <ProgressBar $width={68} />
-          </ProgressWrap>
         </StatCard>
 
         {/* 카드 3: 수수료 총액 */}
@@ -155,15 +156,17 @@ export default function AdminSalesPage() {
       <PendingSection>
         <PendingHeader>
           <PendingTitle>정산 대기 목록</PendingTitle>
-          <PendingCount>총 18건의 대기 중인 항목이 있습니다.</PendingCount>
+          <AdminSearchInput
+            value={pendingSearch}
+            onChange={setPendingSearch}
+            placeholder="거래처명 / ID 검색..."
+            width="220px"
+          />
         </PendingHeader>
 
         <PendingTable>
           <PTHead>
             <PTR>
-              <PTH $width="32px">
-                <PinIconSmall />
-              </PTH>
               <PTH>ID</PTH>
               <PTH>거래처명</PTH>
               <PTH>정산 요청일</PTH>
@@ -173,11 +176,14 @@ export default function AdminSalesPage() {
             </PTR>
           </PTHead>
           <PTBody>
-            {PENDING_LIST.map((row) => (
-              <PTR key={row.id} $hoverable>
-                <PTD>
-                  <RowDotIcon />
+            {filteredPending.length === 0 ? (
+              <PTR>
+                <PTD colSpan={6}>
+                  <EmptyPending>검색 결과가 없습니다.</EmptyPending>
                 </PTD>
+              </PTR>
+            ) : filteredPending.map((row) => (
+              <PTR key={row.id} $hoverable>
                 <PTD>
                   <PendingId>{row.id}</PendingId>
                 </PTD>
@@ -229,9 +235,6 @@ function ReceiptIcon() {
 function PercentIcon() {
   return <Percent size={20} />;
 }
-function TrendUp() {
-  return <TrendingUp size={14} color="#16a34a" />;
-}
 function TrendInline() {
   return (
     <TrendingUp
@@ -257,27 +260,6 @@ function DateDot() {
         verticalAlign: 'middle',
       }}
     />
-  );
-}
-function PinIconSmall() {
-  return <Filter size={12} color="#94a3b8" />;
-}
-function RowDotIcon() {
-  return (
-    <span style={{ display: 'flex', gap: 2 }}>
-      {[0, 1].map((i) => (
-        <span
-          key={i}
-          style={{
-            width: 3,
-            height: 3,
-            borderRadius: '50%',
-            background: '#cbd5e1',
-            display: 'block',
-          }}
-        />
-      ))}
-    </span>
   );
 }
 
@@ -362,38 +344,10 @@ const StatValue = styled.p`
   line-height: 1.2;
 `;
 
-const StatTrendRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-top: 4px;
-`;
-
-const TrendText = styled.span`
-  font-size: 12px;
-  font-weight: 600;
-  color: #16a34a;
-`;
-
 const StatSubText = styled.p`
   font-size: 11px;
   color: ${({ theme }) => theme.colors.textLight};
   margin-top: 4px;
-`;
-
-const ProgressWrap = styled.div`
-  margin-top: 8px;
-  height: 6px;
-  background: ${({ theme }) => theme.colors.borderLight};
-  border-radius: 999px;
-  overflow: hidden;
-`;
-
-const ProgressBar = styled.div`
-  height: 100%;
-  width: ${({ $width }) => $width}%;
-  background: ${({ theme }) => theme.colors.adminPrimary};
-  border-radius: 999px;
 `;
 
 /* 중단 3열 */
@@ -738,6 +692,13 @@ const ApprovalBtn = styled.button`
   &:hover {
     opacity: 0.85;
   }
+`;
+
+const EmptyPending = styled.div`
+  padding: 40px 0;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 14px;
 `;
 
 const ViewAllRow = styled.div`

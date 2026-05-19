@@ -1,7 +1,8 @@
 // src/features/admin/pages/AdminReservationPage.jsx
 import { useState } from 'react';
 import styled from 'styled-components';
-import { Calendar, Building2, Search, ChevronLeft as LucideChevronLeft, ChevronRight as LucideChevronRight, ExternalLink, Users, X } from 'lucide-react';
+import { Calendar, Building2, ChevronLeft as LucideChevronLeft, ChevronRight as LucideChevronRight, ExternalLink, Users, X } from 'lucide-react';
+import AdminSearchInput from '../components/common/AdminSearchInput';
 import {
   RESERVATION_STAT_CARDS,
   RESERVATION_LIST,
@@ -72,7 +73,6 @@ export default function AdminReservationPage() {
               >
                 {idx === 0 ? <CalendarIcon /> : <BuildingStatIcon />}
               </StatIconWrap>
-              <StatBadge $color={card.badge.color}>{card.badge.text}</StatBadge>
             </StatCardTop>
             <StatLabel>{card.label}</StatLabel>
             <StatValueRow>
@@ -86,16 +86,12 @@ export default function AdminReservationPage() {
       <TableSection>
         <TableTitleRow>
           <TableTitle>예약</TableTitle>
-          <ResvSearchWrap>
-            <SearchIconWrap>
-              <SearchSvg />
-            </SearchIconWrap>
-            <SearchInput
-              placeholder="예약 검색..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </ResvSearchWrap>
+          <AdminSearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="예약 검색..."
+            width="260px"
+          />
         </TableTitleRow>
 
         <Table>
@@ -110,7 +106,12 @@ export default function AdminReservationPage() {
             </TR>
           </THead>
           <TBody>
-            {RESERVATION_LIST.map((row) => (
+            {RESERVATION_LIST.filter((row) =>
+              !search ||
+              row.customerName.toLowerCase().includes(search.toLowerCase()) ||
+              row.spaceName.toLowerCase().includes(search.toLowerCase()) ||
+              row.id.toLowerCase().includes(search.toLowerCase())
+            ).map((row) => (
               <TR key={row.id} $hoverable>
                 <TD>
                   <ResvId>{row.id}</ResvId>
@@ -229,16 +230,12 @@ export default function AdminReservationPage() {
             </ModalHeader>
             <ModalBody>
               <ModalSearchRow>
-                <ModalSearchWrap>
-                  <SearchIconWrap>
-                    <SearchSvg />
-                  </SearchIconWrap>
-                  <SearchInput
-                    placeholder="파트너 검색..."
-                    value={partnerSearch}
-                    onChange={(e) => setPartnerSearch(e.target.value)}
-                  />
-                </ModalSearchWrap>
+                <AdminSearchInput
+                  value={partnerSearch}
+                  onChange={setPartnerSearch}
+                  placeholder="파트너 검색..."
+                  width="100%"
+                />
               </ModalSearchRow>
               <PartnerModalList>
                 {filteredPartners.map(company => (
@@ -270,7 +267,6 @@ export default function AdminReservationPage() {
 /* ── Icon Components ── */
 function CalendarIcon() { return <Calendar size={20} />; }
 function BuildingStatIcon() { return <Building2 size={20} />; }
-function SearchSvg() { return <Search size={14} color="#9ca3af" />; }
 function ChevronLeft() { return <LucideChevronLeft size={14} color="#475569" strokeWidth={1.5} />; }
 function ChevronRight() { return <LucideChevronRight size={14} color="#475569" strokeWidth={1.5} />; }
 function ExternalLinkIcon() { return <ExternalLink size={14} color="#64748b" />; }
@@ -313,17 +309,6 @@ const TopSection = styled.div`
   gap: 16px;
 `;
 
-/* 예약 검색 */
-const ResvSearchWrap = styled.div`
-  width: 260px;
-  background: ${({ theme }) => theme.colors.bgSection};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 8px;
-  padding: 7px 14px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
 
 const StatCard = styled.div`
   background: ${({ theme }) => theme.colors.white};
@@ -372,43 +357,6 @@ const StatValue = styled.p`
   color: ${({ theme }) => theme.colors.adminTextDark};
   font-family: ${({ theme }) => theme.fonts.number};
   letter-spacing: -0.5px;
-`;
-
-const StatBadge = styled.span`
-  font-size: 13px;
-  font-weight: 600;
-  color: ${({ $color }) => $color === 'green' ? '#16a34a' : '#dc2626'};
-`;
-
-const SearchCard = styled.div`
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 0 16px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-`;
-
-const SearchIconWrap = styled.div`
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-`;
-
-const SearchInput = styled.input`
-  flex: 1;
-  border: none;
-  outline: none;
-  font-size: 14px;
-  color: ${({ theme }) => theme.colors.adminTextDark};
-  font-family: inherit;
-  background: none;
-
-  &::placeholder {
-    color: ${({ theme }) => theme.colors.textLight};
-  }
 `;
 
 /* 예약 테이블 */
@@ -783,17 +731,6 @@ const ModalSearchRow = styled.div`
   margin-bottom: 16px;
 `;
 
-const ModalSearchWrap = styled.div`
-  width: 100%;
-  background: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 8px;
-  padding: 10px 16px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-`;
 
 const ModalTitle = styled.h2`
   font-size: 18px;

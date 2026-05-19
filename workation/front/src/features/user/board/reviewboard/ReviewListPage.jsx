@@ -1,7 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { getReviewList, deleteReview } from '../api/Reviewapi';
+import {
+  getReviewList,
+  deleteReview,
+  getComments,
+  createComment,
+  deleteComment,
+  getImageUrl,
+  getReviewLike,
+  toggleReviewLike,
+  getCommentLike,
+  toggleCommentLike,
+} from '../api/Reviewapi';
 
 function StarDisplay({ rating }) {
   return (
@@ -26,36 +37,220 @@ function formatDate(dateStr) {
   return `${Math.floor(days / 365)}년 전`;
 }
 
-// ── 카드 한 개 ──────────────────────────────────────────────────────────────
+/* ── 댓글 좋아요 버튼 ── */
+function CommentLikeBtn({ reviewId, commentId }) {
+  const [liked, setLiked] = useState(false);
+  const [count, setCount] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    getCommentLike(reviewId, commentId)
+      .then((data) => {
+        setLiked(data.liked);
+        setCount(data.count);
+      })
+      .catch(() => {});
+  }, [commentId]);
+
+  async function handleToggle() {
+    if (loading) return;
+    try {
+      setLoading(true);
+      const data = await toggleCommentLike(reviewId, commentId);
+      setLiked(data.liked);
+      setCount(data.count);
+    } catch {
+      alert('로그인이 필요합니다.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <LikeBtn $liked={liked} onClick={handleToggle} disabled={loading}>
+      👍 {count > 0 && <LikeCount>{count}</LikeCount>}
+    </LikeBtn>
+  );
+}
+
+/* ── 댓글 섹션 ── */
+function CommentSection({ reviewId }) {
+  const [comments, setComments] = useState([]);
+  const [loadingComments, setLoadingComments] = useState(true);
+  const [commentInput, setCommentInput] = useState('');
+  const [deleteCommentId, setDeleteCommentId] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    setLoadingComments(true);
+    getComments(reviewId)
+      .then((data) =>
+        setComments(Array.isArray(data) ? data : (data.content ?? []))
+      )
+      .catch((err) => console.error(err))
+      .finally(() => setLoadingComments(false));
+  }, [reviewId]);
+
+  async function handleCommentSubmit() {
+    if (!commentInput.trim()) return;
+    try {
+      setSubmitting(true);
+      await createComment(reviewId, { content: commentInput, ownerYn: 'N' });
+      const updated = await getComments(reviewId);
+      setComments(Array.isArray(updated) ? updated : (updated.content ?? []));
+      setCommentInput('');
+    } catch (err) {
+      console.error(err);
+      alert('댓글 등록에 실패했습니다.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleCommentDelete(commentId) {
+    try {
+      await deleteComment(reviewId, commentId);
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
+      setDeleteCommentId(null);
+    } catch (err) {
+      console.error(err);
+      alert('댓글 삭제에 실패했습니다.');
+    }
+  }
+
+  if (loadingComments)
+    return <CommentLoading>댓글 불러오는 중...</CommentLoading>;
+
+  return (
+    <CommentArea>
+      <CommentList>
+        {comments.length === 0 && (
+          <EmptyComment>첫 번째 댓글을 남겨보세요</EmptyComment>
+        )}
+        {comments.map((c) => (
+          <CommentCard key={c.id} $isOwner={c.ownerYn === 'Y'}>
+            <CommentTop>
+              <CommentAvatar $isOwner={c.ownerYn === 'Y'}>
+                {c.writer?.charAt(0) ?? '?'}
+              </CommentAvatar>
+              <CommentWriter $isOwner={c.ownerYn === 'Y'}>
+                {c.writer}
+              </CommentWriter>
+              {c.ownerYn === 'Y' && <OwnerBadge>운영자</OwnerBadge>}
+              <CommentMeta>
+                <CommentDate>{formatDate(c.createdAt)}</CommentDate>
+                <CommentLikeBtn reviewId={reviewId} commentId={c.id} />
+                <CommentDelBtn onClick={() => setDeleteCommentId(c.id)}>
+                  삭제
+                </CommentDelBtn>
+              </CommentMeta>
+            </CommentTop>
+            <CommentBody>{c.content}</CommentBody>
+          </CommentCard>
+        ))}
+      </CommentList>
+
+      <CommentInputBox>
+        <CommentInputRow>
+          <CommentTextArea
+            placeholder="댓글을 입력하세요"
+            value={commentInput}
+            onChange={(e) => setCommentInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleCommentSubmit();
+              }
+            }}
+          />
+          <CommentSubmitBtn onClick={handleCommentSubmit} disabled={submitting}>
+            {submitting ? '...' : '등록'}
+          </CommentSubmitBtn>
+        </CommentInputRow>
+      </CommentInputBox>
+
+      {deleteCommentId && (
+        <ModalOverlay>
+          <Modal>
+            <ModalText>댓글을 삭제하시겠습니까?</ModalText>
+            <ModalButtons>
+              <ModalCancel onClick={() => setDeleteCommentId(null)}>
+                취소
+              </ModalCancel>
+              <ModalDelete onClick={() => handleCommentDelete(deleteCommentId)}>
+                삭제
+              </ModalDelete>
+            </ModalButtons>
+          </Modal>
+        </ModalOverlay>
+      )}
+    </CommentArea>
+  );
+}
+
+/* ── 게시글 좋아요 버튼 ── */
+function ReviewLikeBtn({ reviewId }) {
+  const [liked, setLiked] = useState(false);
+  const [count, setCount] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    getReviewLike(reviewId)
+      .then((data) => {
+        setLiked(data.liked);
+        setCount(data.count);
+      })
+      .catch(() => {});
+  }, [reviewId]);
+
+  async function handleToggle() {
+    if (loading) return;
+    try {
+      setLoading(true);
+      const data = await toggleReviewLike(reviewId);
+      setLiked(data.liked);
+      setCount(data.count);
+    } catch {
+      alert('로그인이 필요합니다.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <ReviewLikeBtnWrapper
+      $liked={liked}
+      onClick={handleToggle}
+      disabled={loading}
+    >
+      👍 좋아요 {count > 0 && <span>{count}</span>}
+    </ReviewLikeBtnWrapper>
+  );
+}
+
+/* ── 카드 ── */
 function ReviewCard({ review, onDelete, onEdit }) {
   const [expanded, setExpanded] = useState(false);
   const [lightboxIdx, setLightboxIdx] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showComments, setShowComments] = useState(false);
   const [needsMore, setNeedsMore] = useState(false);
   const contentRef = useRef(null);
+  const imageUrls = review.images?.map((img) => getImageUrl(img.s3Key)) ?? [];
 
-  const imageUrls = review.images?.map((img) => img.s3Key) ?? [];
-
-  // 실제 렌더된 텍스트가 3줄을 초과하는지 측정
   useEffect(() => {
     if (!contentRef.current) return;
     const lineHeight = parseFloat(
       getComputedStyle(contentRef.current).lineHeight
     );
-    const scrollH = contentRef.current.scrollHeight;
-    setNeedsMore(scrollH > lineHeight * 3 + 4); // 여유 4px
+    setNeedsMore(contentRef.current.scrollHeight > lineHeight * 3 + 4);
   }, [review.content]);
 
   return (
     <Card>
-      {/* ── 카드 헤더: 프로필 + [제목·수정·삭제] ── */}
       <CardHeader>
-        {/* 왼쪽: 아바타 */}
         <Avatar>{review.writer?.[0] ?? 'U'}</Avatar>
-
-        {/* 오른쪽: 제목(중앙) + 메타 + 버튼 */}
         <HeaderRight>
-          {/* 제목 — 프로필 기준 오른쪽 영역 중앙 */}
           <TitleRow>
             <CardTitle>{review.title}</CardTitle>
             <CardActions>
@@ -65,25 +260,19 @@ function ReviewCard({ review, onDelete, onEdit }) {
               </ActionBtn>
             </CardActions>
           </TitleRow>
-
-          {/* 작성자 · 별점 · 날짜 */}
           <WriterMeta>
             <WriterName>{review.writer}</WriterName>
             <StarDisplay rating={review.rating} />
+            <ReviewLikeBtn reviewId={review.id} />
             <DateText>{formatDate(review.createdAt)}</DateText>
           </WriterMeta>
         </HeaderRight>
       </CardHeader>
 
-      {/* ── 이미지 그리드 ── */}
       {imageUrls.length > 0 && (
-        <ImageGrid $count={Math.min(imageUrls.length, 4)}>
+        <ImageGrid>
           {imageUrls.slice(0, 4).map((src, i) => (
-            <ImageItem
-              key={i}
-              $single={imageUrls.length === 1}
-              onClick={() => setLightboxIdx(i)}
-            >
+            <ImageItem key={i} onClick={() => setLightboxIdx(i)}>
               <img src={src} alt={`리뷰 이미지 ${i + 1}`} />
               {i === 3 && imageUrls.length > 4 && (
                 <MoreImageOverlay>+{imageUrls.length - 4}</MoreImageOverlay>
@@ -93,7 +282,6 @@ function ReviewCard({ review, onDelete, onEdit }) {
         </ImageGrid>
       )}
 
-      {/* ── 본문: 3줄 클램프 ── */}
       <ContentArea>
         <CardContent ref={contentRef} $expanded={expanded}>
           {review.content}
@@ -105,12 +293,17 @@ function ReviewCard({ review, onDelete, onEdit }) {
         )}
       </ContentArea>
 
-      {/* ── 라이트박스 ── */}
+      <CommentToggleBtn onClick={() => setShowComments((v) => !v)}>
+        💬 댓글 {showComments ? '닫기 ▲' : '보기 ▼'}
+      </CommentToggleBtn>
+
+      {showComments && <CommentSection reviewId={review.id} />}
+
       {lightboxIdx !== null && (
         <Overlay onClick={() => setLightboxIdx(null)}>
           <LightboxImg
             src={imageUrls[lightboxIdx]}
-            alt="확대 이미지"
+            alt="확대"
             onClick={(e) => e.stopPropagation()}
           />
           <LightboxClose onClick={() => setLightboxIdx(null)}>✕</LightboxClose>
@@ -137,7 +330,6 @@ function ReviewCard({ review, onDelete, onEdit }) {
         </Overlay>
       )}
 
-      {/* ── 삭제 확인 모달 ── */}
       {showConfirm && (
         <Overlay onClick={() => setShowConfirm(false)}>
           <Modal onClick={(e) => e.stopPropagation()}>
@@ -162,7 +354,7 @@ function ReviewCard({ review, onDelete, onEdit }) {
   );
 }
 
-// ── 메인 컴포넌트 ────────────────────────────────────────────────────────────
+/* ── 메인 ── */
 export default function ReviewListPage() {
   const navigate = useNavigate();
   const [list, setList] = useState([]);
@@ -193,9 +385,8 @@ export default function ReviewListPage() {
       const data = await getReviewList(currentPage);
       setList(data.content ?? []);
       setTotalPages(data.totalPages ?? 1);
-      if ((data.content ?? []).length === 0 && currentPage > 0) {
+      if ((data.content ?? []).length === 0 && currentPage > 0)
         setCurrentPage((p) => p - 1);
-      }
     } catch (err) {
       console.error(err);
       alert('삭제에 실패했습니다.');
@@ -207,13 +398,11 @@ export default function ReviewListPage() {
   return (
     <Wrapper>
       <div ref={topRef} />
-
       <ListHeader>
         <ReviewCount>
           ⭐ 전체 후기 <Strong>{totalPages * 10}개+</Strong>
         </ReviewCount>
       </ListHeader>
-
       <FeedList>
         {list.length === 0 && <Empty>등록된 후기가 없습니다.</Empty>}
         {list.map((review) => (
@@ -225,7 +414,6 @@ export default function ReviewListPage() {
           />
         ))}
       </FeedList>
-
       {totalPages > 1 && (
         <Pagination>
           <PageBtn
@@ -256,9 +444,7 @@ export default function ReviewListPage() {
 }
 
 /* ── Styled Components ── */
-
 const Wrapper = styled.div``;
-
 const ListHeader = styled.div`
   display: flex;
   align-items: center;
@@ -267,36 +453,28 @@ const ListHeader = styled.div`
   padding-bottom: 16px;
   border-bottom: 2px solid ${({ theme }) => theme.colors.textDark};
 `;
-
 const ReviewCount = styled.div`
   font-size: 16px;
   font-weight: 600;
   color: ${({ theme }) => theme.colors.textDark};
 `;
-
 const Strong = styled.span`
   color: ${({ theme }) => theme.colors.primary};
 `;
-
 const FeedList = styled.div`
   display: flex;
   flex-direction: column;
 `;
-
-/* ── 카드 ── */
 const Card = styled.div`
   padding: 28px 0;
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
 `;
-
-/* 헤더: 아바타(왼쪽) + 오른쪽 전체 영역 */
 const CardHeader = styled.div`
   display: flex;
   align-items: flex-start;
   gap: 14px;
   margin-bottom: 16px;
 `;
-
 const Avatar = styled.div`
   width: 44px;
   height: 44px;
@@ -310,27 +488,20 @@ const Avatar = styled.div`
   justify-content: center;
   flex-shrink: 0;
 `;
-
-/* 프로필 오른쪽 전체 영역 */
 const HeaderRight = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  /* 아바타 높이(44px)에 맞춰 내용 세로 중앙 정렬 */
   justify-content: center;
   min-height: 44px;
 `;
-
-/* 제목 + 수정/삭제 버튼을 같은 행에 */
 const TitleRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 `;
-
-/* 제목: 굵게, 중앙(오른쪽 영역 안에서 세로 중앙은 HeaderRight가 처리) */
 const CardTitle = styled.div`
   font-size: 16px;
   font-weight: 800;
@@ -338,13 +509,11 @@ const CardTitle = styled.div`
   line-height: 1.4;
   flex: 1;
 `;
-
 const CardActions = styled.div`
   display: flex;
   gap: 6px;
   flex-shrink: 0;
 `;
-
 const ActionBtn = styled.button`
   padding: 5px 12px;
   border-radius: ${({ theme }) => theme.radius.full};
@@ -364,48 +533,62 @@ const ActionBtn = styled.button`
       $danger ? '#ef4444' : theme.colors.primary};
   }
 `;
-
 const WriterMeta = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 `;
-
 const WriterName = styled.span`
   font-size: 13px;
   font-weight: 600;
   color: ${({ theme }) => theme.colors.textMid};
 `;
-
 const DateText = styled.span`
   font-size: 13px;
   color: ${({ theme }) => theme.colors.textLight};
 `;
 
-/* 이미지 그리드 */
+const ReviewLikeBtnWrapper = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: ${({ theme }) => theme.radius.full};
+  border: 1px solid
+    ${({ $liked, theme }) =>
+      $liked ? theme.colors.primary : theme.colors.border};
+  background: ${({ $liked, theme }) =>
+    $liked ? theme.colors.primary + '15' : 'transparent'};
+  color: ${({ $liked, theme }) =>
+    $liked ? theme.colors.primary : theme.colors.textMid};
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  &:hover:not(:disabled) {
+    border-color: ${({ theme }) => theme.colors.primary};
+    background: ${({ theme }) => theme.colors.primary + '15'};
+    color: ${({ theme }) => theme.colors.primary};
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+`;
+
 const ImageGrid = styled.div`
   display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3px;
   margin-bottom: 14px;
   border-radius: ${({ theme }) => theme.radius.md};
   overflow: hidden;
-  gap: 3px;
-  ${({ $count }) => {
-    if ($count === 1) return 'grid-template-columns: 1fr;';
-    if ($count === 2) return 'grid-template-columns: 1fr 1fr;';
-    if ($count === 3)
-      return `
-      grid-template-columns: 2fr 1fr;
-      grid-template-rows: 1fr 1fr;
-      & > *:first-child { grid-row: span 2; }
-    `;
-    return 'grid-template-columns: 1fr 1fr 1fr 1fr;';
-  }}
 `;
-
 const ImageItem = styled.div`
   position: relative;
   overflow: hidden;
-  aspect-ratio: ${({ $single }) => ($single ? '16/9' : '4/3')};
+  aspect-ratio: 1/1;
   cursor: pointer;
   background: ${({ theme }) => theme.colors.bgSection};
   img {
@@ -419,7 +602,6 @@ const ImageItem = styled.div`
     transform: scale(1.03);
   }
 `;
-
 const MoreImageOverlay = styled.div`
   position: absolute;
   inset: 0;
@@ -431,28 +613,17 @@ const MoreImageOverlay = styled.div`
   font-weight: 700;
   color: white;
 `;
-
-/* 본문 영역 */
 const ContentArea = styled.div``;
-
 const CardContent = styled.p`
   font-size: 14px;
   line-height: 1.8;
   color: ${({ theme }) => theme.colors.textMid};
   white-space: pre-line;
   margin: 0;
-
-  /* 접혀있을 때: 3줄 클램프 */
   ${({ $expanded }) =>
     !$expanded &&
-    `
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  `}
+    `display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;`}
 `;
-
 const MoreBtn = styled.button`
   margin-top: 6px;
   background: none;
@@ -466,8 +637,193 @@ const MoreBtn = styled.button`
     opacity: 0.75;
   }
 `;
-
-/* 라이트박스 */
+const CommentToggleBtn = styled.button`
+  margin-top: 16px;
+  padding: 8px 16px;
+  border-radius: ${({ theme }) => theme.radius.full};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  background: ${({ theme }) => theme.colors.bgSection};
+  color: ${({ theme }) => theme.colors.textMid};
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.primary};
+    color: ${({ theme }) => theme.colors.primary};
+  }
+`;
+const CommentArea = styled.div`
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
+`;
+const CommentLoading = styled.div`
+  padding: 16px 0;
+  font-size: 13px;
+  color: ${({ theme }) => theme.colors.textLight};
+`;
+const CommentList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+`;
+const CommentCard = styled.div`
+  padding: 14px 16px;
+  border-radius: ${({ theme }) => theme.radius.md};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  background: ${({ $isOwner, theme }) =>
+    $isOwner ? theme.colors.bgSection : 'white'};
+`;
+const CommentTop = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+`;
+const CommentAvatar = styled.div`
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: ${({ $isOwner, theme }) =>
+    $isOwner ? theme.colors.primary + '20' : theme.colors.bgSection};
+  color: ${({ $isOwner, theme }) =>
+    $isOwner ? theme.colors.primary : theme.colors.textMid};
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+`;
+const CommentWriter = styled.span`
+  font-size: 13px;
+  font-weight: 700;
+  color: ${({ $isOwner, theme }) =>
+    $isOwner ? theme.colors.primary : theme.colors.textDark};
+`;
+const OwnerBadge = styled.span`
+  font-size: 11px;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.primary};
+  background: ${({ theme }) => theme.colors.primary}18;
+  border-radius: ${({ theme }) => theme.radius.full};
+  padding: 2px 8px;
+`;
+const CommentMeta = styled.div`
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+const CommentDate = styled.span`
+  font-size: 12px;
+  color: ${({ theme }) => theme.colors.textLight};
+`;
+const CommentDelBtn = styled.button`
+  font-size: 12px;
+  color: ${({ theme }) => theme.colors.textLight};
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s;
+  &:hover {
+    color: #ef4444;
+  }
+`;
+const LikeBtn = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: ${({ theme }) => theme.radius.full};
+  border: 1px solid
+    ${({ $liked, theme }) =>
+      $liked ? theme.colors.primary : theme.colors.border};
+  background: ${({ $liked, theme }) =>
+    $liked ? theme.colors.primary + '15' : 'transparent'};
+  color: ${({ $liked, theme }) =>
+    $liked ? theme.colors.primary : theme.colors.textLight};
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  &:hover:not(:disabled) {
+    border-color: ${({ theme }) => theme.colors.primary};
+    color: ${({ theme }) => theme.colors.primary};
+    background: ${({ theme }) => theme.colors.primary + '15'};
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+`;
+const LikeCount = styled.span`
+  font-size: 12px;
+`;
+const CommentBody = styled.p`
+  font-size: 14px;
+  color: ${({ theme }) => theme.colors.textMid};
+  line-height: 1.7;
+  margin: 0;
+`;
+const EmptyComment = styled.div`
+  padding: 20px 0;
+  text-align: center;
+  color: ${({ theme }) => theme.colors.textLight};
+  font-size: 13px;
+`;
+const CommentInputBox = styled.div`
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radius.md};
+  padding: 14px;
+  background: ${({ theme }) => theme.colors.bgSection};
+`;
+const CommentInputRow = styled.div`
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+`;
+const CommentTextArea = styled.textarea`
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radius.sm};
+  font-size: 14px;
+  color: ${({ theme }) => theme.colors.textDark};
+  resize: none;
+  height: 60px;
+  outline: none;
+  font-family: ${({ theme }) => theme.fonts.base};
+  background: white;
+  transition: border-color 0.15s;
+  &::placeholder {
+    color: ${({ theme }) => theme.colors.textLight};
+  }
+  &:focus {
+    border-color: ${({ theme }) => theme.colors.primary};
+  }
+`;
+const CommentSubmitBtn = styled.button`
+  padding: 0 18px;
+  height: 60px;
+  border-radius: ${({ theme }) => theme.radius.sm};
+  border: none;
+  background: ${({ theme }) => theme.colors.primary};
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};
+  transition: background 0.15s;
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.colors.primaryLight};
+  }
+`;
 const Overlay = styled.div`
   position: fixed;
   inset: 0;
@@ -477,14 +833,12 @@ const Overlay = styled.div`
   justify-content: center;
   z-index: 300;
 `;
-
 const LightboxImg = styled.img`
   max-width: 80vw;
   max-height: 80vh;
   object-fit: contain;
   border-radius: ${({ theme }) => theme.radius.md};
 `;
-
 const LightboxClose = styled.button`
   position: fixed;
   top: 24px;
@@ -495,7 +849,6 @@ const LightboxClose = styled.button`
   border: none;
   cursor: pointer;
 `;
-
 const LightboxPrev = styled.button`
   position: fixed;
   left: 24px;
@@ -505,7 +858,6 @@ const LightboxPrev = styled.button`
   border: none;
   cursor: pointer;
 `;
-
 const LightboxNext = styled.button`
   position: fixed;
   right: 24px;
@@ -515,8 +867,6 @@ const LightboxNext = styled.button`
   border: none;
   cursor: pointer;
 `;
-
-/* 삭제 모달 */
 const Modal = styled.div`
   background: ${({ theme }) => theme.colors.white};
   border-radius: ${({ theme }) => theme.radius.md};
@@ -527,18 +877,15 @@ const Modal = styled.div`
   gap: 28px;
   box-shadow: ${({ theme }) => theme.shadows.cardHover};
 `;
-
 const ModalText = styled.p`
   font-size: 18px;
   font-weight: 600;
   color: ${({ theme }) => theme.colors.textDark};
 `;
-
 const ModalButtons = styled.div`
   display: flex;
   gap: 12px;
 `;
-
 const ModalCancel = styled.button`
   padding: 12px 28px;
   border-radius: ${({ theme }) => theme.radius.full};
@@ -552,7 +899,6 @@ const ModalCancel = styled.button`
     background: ${({ theme }) => theme.colors.bgSection};
   }
 `;
-
 const ModalDelete = styled.button`
   padding: 12px 28px;
   border-radius: ${({ theme }) => theme.radius.full};
@@ -566,15 +912,21 @@ const ModalDelete = styled.button`
     background: #dc2626;
   }
 `;
-
-/* 페이지네이션 */
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+`;
 const Empty = styled.div`
   padding: 48px 0;
   text-align: center;
   color: ${({ theme }) => theme.colors.textLight};
   font-size: 15px;
 `;
-
 const Pagination = styled.div`
   display: flex;
   justify-content: center;
@@ -582,7 +934,6 @@ const Pagination = styled.div`
   gap: 6px;
   margin-top: 40px;
 `;
-
 const PageBtn = styled.button`
   width: 36px;
   height: 36px;
@@ -607,8 +958,6 @@ const PageBtn = styled.button`
     cursor: default;
   }
 `;
-
-/* 별점 */
 const Stars = styled.div`
   display: flex;
   gap: 1px;

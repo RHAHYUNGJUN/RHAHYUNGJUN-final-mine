@@ -1,8 +1,10 @@
 package com.kh.app.member.service;
 
-import com.kh.app.member.dto.request.MemberJoinReqDto;
-import com.kh.app.member.dto.request.SellerApplyReqDto;
+import com.kh.app.common.dto.PageRespDto;
+import com.kh.app.member.dto.request.*;
+import com.kh.app.member.dto.response.MemberListRespDto;
 import com.kh.app.member.dto.response.MemberMeRespDto;
+import com.kh.app.member.dto.response.MemberRespDto;
 import com.kh.app.member.entity.*;
 import com.kh.app.member.repository.BankRepository;
 import com.kh.app.member.repository.MemberRepository;
@@ -13,6 +15,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional(readOnly = true)
@@ -84,4 +89,106 @@ public class MemberService {
     }
 
 
+    public PageRespDto<MemberListRespDto> searchMembers(MemberSearchCondDto dto) {
+
+        List<MemberListRespDto> list = memberRepository.searchMembers(dto);
+
+        long totalCount = memberRepository.countMembers(dto);
+
+        int totalPage =
+                (int) Math.ceil((double) totalCount / dto.getSize());
+
+        return PageRespDto.<MemberListRespDto>builder()
+                .content(list)
+                .currentPage(dto.getPage())
+                .size(dto.getSize())
+                .totalCount(totalCount)
+                .totalPage(totalPage)
+                .build();
+    }
+
+    public PageRespDto<MemberListRespDto> searchSellers(SellerSearchCondDto dto) {
+        List<MemberListRespDto> list = memberRepository.searchSellers(dto);
+
+        long totalCount = memberRepository.countSellers(dto);
+
+        int totalPage =
+                (int) Math.ceil((double) totalCount / dto.getSize());
+
+        return PageRespDto.<MemberListRespDto>builder()
+                .content(list)
+                .currentPage(dto.getPage())
+                .size(dto.getSize())
+                .totalCount(totalCount)
+                .totalPage(totalPage)
+                .build();
+    }
+
+    public MemberRespDto getMemberDetail(Long id) {
+        MemberEntity member = memberRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("회원 없음"));
+        MemberProfileEntity profile = member.getProfile();
+        return MemberRespDto.from(
+                member,
+                profile.getName(),
+                profile.getPhone(),
+                profile.getEmail()
+        );
+    }
+
+    @Transactional
+    public void banMember(Long id) {
+        MemberEntity member = memberRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("회원 없음"));
+        if ("Y".equals(member.getBanYn())) {
+            throw new RuntimeException("이미 정지된 회원");
+        }
+        member.ban();
+    }
+
+    @Transactional
+    public void unbanMember(Long id) {
+        MemberEntity member = memberRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("회원 없음"));
+        member.unban();
+    }
+
+    @Transactional
+    public void editMyInfo(Long memberId, MemberUpdateReqDto dto) {
+        MemberProfileEntity profile = profileRepository.findById(memberId).orElseThrow(() -> new RuntimeException("회원 없음"));
+        profile.updateProfile(
+                dto.getName(),
+                dto.getPhone(),
+                dto.getEmail(),
+                dto.getPreferredArea()
+        );
+    }
+
+    @Transactional
+    public void updatePassword(Long memberId, MemberPasswordUpdateReqDto dto) {
+        MemberEntity member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new RuntimeException("회원 없음"));
+        // 현재 비밀번호 검증
+        if (!passwordEncoder.matches(
+                dto.getCurrentPassword(),
+                member.getPassword()
+        )) {
+            throw new RuntimeException("현재 비밀번호 불일치");
+        }
+        // 새 비밀번호 확인 검증
+        if (!dto.getNewPassword()
+                .equals(dto.getNewPasswordCheck())) {
+            throw new RuntimeException("새 비밀번호 확인 불일치");
+        }
+        // 암호화
+        String encodedPw =
+                passwordEncoder.encode(dto.getNewPassword());
+        // 엔티티 변경
+        member.changePassword(encodedPw);
+    }
+    @Transactional
+    public void deleteAccount(Long memberId) {
+        MemberEntity member = memberRepository.findById(memberId).orElseThrow(() -> new RuntimeException("회원 없음"));
+        member.delete();
+    }
 }

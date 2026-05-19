@@ -1,7 +1,8 @@
 // src/features/admin/pages/AdminSpacesPage.jsx
 import { useState } from 'react';
 import styled from 'styled-components';
-import { Home, CheckCircle, AlertTriangle, Search, EyeOff, X } from 'lucide-react';
+import { Home, CheckCircle, AlertTriangle, EyeOff, X } from 'lucide-react';
+import AdminSearchInput from '../components/common/AdminSearchInput';
 import {
   SPACES_TOTAL,
   SPACES_TOTAL_PAGES,
@@ -103,7 +104,6 @@ export default function AdminSpacesPage() {
             <StatIconWrap $bg="rgba(34,197,94,0.1)" $color="#16a34a">
               <SpaceIcon />
             </StatIconWrap>
-            <StatBadge $color="green">+12%</StatBadge>
           </StatCardTop>
           <StatLabel>전체 숙소 수</StatLabel>
           <StatValue>1,284</StatValue>
@@ -114,7 +114,6 @@ export default function AdminSpacesPage() {
             <StatIconWrap $bg="rgba(59,130,246,0.1)" $color="#2563eb">
               <CheckCircleIcon />
             </StatIconWrap>
-            <StatBadge $color="blue">{Math.round((spaces.length / SPACES_TOTAL) * 100)}% 운영 중</StatBadge>
           </StatCardTop>
           <StatLabel>운영 중인 숙소</StatLabel>
           <StatValue>{spaces.length.toLocaleString()}</StatValue>
@@ -125,7 +124,6 @@ export default function AdminSpacesPage() {
             <StatIconWrap $bg="rgba(249,115,22,0.1)" $color="#ea580c">
               <AlertIcon />
             </StatIconWrap>
-            <StatBadge $color="orange">조치 필요</StatBadge>
           </StatCardTop>
           <StatLabel>승인 대기 중</StatLabel>
           <StatValue>{pendingSpaces.length}</StatValue>
@@ -135,22 +133,6 @@ export default function AdminSpacesPage() {
       {/* ── 테이블 섹션 ── */}
       <TableSection>
         <Toolbar>
-          <ToolbarLeft>
-            <SearchWrap>
-              <SearchIconWrap><Search size={14} color="#94a3b8" /></SearchIconWrap>
-              <SearchInput
-                type="text"
-                placeholder="숙소 이름 검색..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              {searchQuery && (
-                <ClearBtn onClick={() => setSearchQuery('')}>
-                  <X size={13} color="#94a3b8" />
-                </ClearBtn>
-              )}
-            </SearchWrap>
-          </ToolbarLeft>
           <StatusFilterGroup>
             {['전체', '공개', '비공개'].map((s) => (
               <StatusFilterBtn
@@ -162,6 +144,11 @@ export default function AdminSpacesPage() {
               </StatusFilterBtn>
             ))}
           </StatusFilterGroup>
+          <AdminSearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="숙소 이름 검색..."
+          />
         </Toolbar>
 
         <Table>
@@ -391,21 +378,6 @@ const StatIconWrap = styled.div`
   justify-content: center;
 `;
 
-const BADGE_COLORS = {
-  green:  { bg: '#f0fdf4', color: '#16a34a' },
-  blue:   { bg: '#eff6ff', color: '#2563eb' },
-  orange: { bg: '#fff7ed', color: '#ea580c' },
-};
-
-const StatBadge = styled.span`
-  font-size: 11px;
-  font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 999px;
-  background: ${({ $color }) => BADGE_COLORS[$color].bg};
-  color: ${({ $color }) => BADGE_COLORS[$color].color};
-`;
-
 const StatLabel = styled.p`
   font-size: 12px;
   color: #64748b;
@@ -436,54 +408,6 @@ const Toolbar = styled.div`
   justify-content: space-between;
   padding: 14px 20px;
   border-bottom: 1px solid #f1f5f9;
-`;
-
-const ToolbarLeft = styled.div`
-  display: flex;
-  gap: 8px;
-`;
-
-const SearchWrap = styled.div`
-  position: relative;
-  display: flex;
-  align-items: center;
-`;
-
-const SearchIconWrap = styled.div`
-  position: absolute;
-  left: 10px;
-  display: flex;
-  align-items: center;
-  pointer-events: none;
-`;
-
-const SearchInput = styled.input`
-  width: 220px;
-  padding: 7px 32px 7px 32px;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  font-size: 13px;
-  color: #0d1c2e;
-  font-family: inherit;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  &::placeholder { color: #94a3b8; }
-  &:focus {
-    outline: none;
-    border-color: #244c54;
-    box-shadow: 0 0 0 3px rgba(36,76,84,0.08);
-  }
-`;
-
-const ClearBtn = styled.button`
-  position: absolute;
-  right: 8px;
-  display: flex;
-  align-items: center;
-  padding: 2px;
-  border-radius: 4px;
-  transition: background 0.15s;
-  &:hover { background: #f1f5f9; }
 `;
 
 const StatusFilterGroup = styled.div`
