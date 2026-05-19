@@ -4,6 +4,7 @@ import com.kh.app.transaction.reservation.entity.ReservationEntity;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
@@ -20,9 +21,9 @@ public class ReservationResDto {
 
     private String primaryGuestName;
 
-    private LocalDateTime checkinDate;
+    private LocalDate checkinDate;
 
-    private LocalDateTime checkoutDate;
+    private LocalDate checkoutDate;
 
     private String primaryGuestPhone;
 
@@ -47,13 +48,15 @@ public class ReservationResDto {
                 .memberId(
                         entity.getMember().getId()
                 )
-
-                .stayId(
-                        entity.getStay() != null
-                                ? entity.getStay().getId()
-                                : null
-                )
-
+/// ////////////////////////////////////////////////////////////
+                //스테이 완료후 수정
+//                .stayId(
+//                        entity.getStay() != null
+//                                ? entity.getStay().getId()
+//                                : null
+//                )
+                .stayId(entity.getStayId())
+/// ////////////////////////////////////////////////////////////
                 .guestCount(
                         entity.getGuestCount()
                 )
