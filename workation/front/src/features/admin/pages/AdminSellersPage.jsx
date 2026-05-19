@@ -15,8 +15,13 @@ import {
   User,
   ChevronLeft as LucideChevronLeft,
   ChevronRight as LucideChevronRight,
+  X,
+  Tag,
+  Trash2,
+  Plus,
+  TicketPercent,
 } from 'lucide-react';
-import { SELLERS_LIST, CUSTOMER_LIST } from '../data/adminSellersData';
+import { SELLERS_LIST, CUSTOMER_LIST, CUSTOMER_COUPONS, COUPON_TEMPLATES } from '../data/adminSellersData';
 import {
   SELLER_STATUS_MAP,
   TOTAL_PAGES,
@@ -62,6 +67,16 @@ export default function AdminSellersPage() {
   /* 확인 모달 */
   const [confirmTarget, setConfirmTarget] = useState(null);
 
+  /* 고객 상세 모달 */
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [customerCoupons, setCustomerCoupons] = useState(() => {
+    const copy = {};
+    Object.entries(CUSTOMER_COUPONS).forEach(([k, v]) => { copy[k] = [...v]; });
+    return copy;
+  });
+  const [showIssuePanel, setShowIssuePanel] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState(COUPON_TEMPLATES[0].id);
+
   const isSellerSuspended = (s) =>
     sellerSuspended[s.id] ?? s.status === 'stopped';
   const isCustomerSuspended = (c) =>
@@ -90,6 +105,43 @@ export default function AdminSellersPage() {
       }));
     }
     setConfirmTarget(null);
+  };
+
+  const handleCloseCustomerModal = () => {
+    setSelectedCustomer(null);
+    setShowIssuePanel(false);
+    setSelectedTemplate(COUPON_TEMPLATES[0].id);
+  };
+
+  const handleDeleteCoupon = (customerId, couponId) => {
+    setCustomerCoupons((prev) => ({
+      ...prev,
+      [customerId]: prev[customerId].filter((c) => c.id !== couponId),
+    }));
+  };
+
+  const handleIssueCoupon = () => {
+    if (!selectedCustomer) return;
+    const tpl = COUPON_TEMPLATES.find((t) => t.id === selectedTemplate);
+    if (!tpl) return;
+    const today = new Date();
+    const expire = new Date(today);
+    expire.setDate(expire.getDate() + tpl.validDays);
+    const fmt = (d) =>
+      `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+    const newCoupon = {
+      id: `CPN-${Date.now()}`,
+      title: tpl.title,
+      discount: tpl.discount,
+      issuedAt: fmt(today),
+      expireAt: fmt(expire),
+    };
+    setCustomerCoupons((prev) => ({
+      ...prev,
+      [selectedCustomer.id]: [newCoupon, ...(prev[selectedCustomer.id] ?? [])],
+    }));
+    setShowIssuePanel(false);
+    setSelectedTemplate(COUPON_TEMPLATES[0].id);
   };
 
   const handleViewChange = (v) => {
@@ -183,6 +235,7 @@ export default function AdminSellersPage() {
             customers={filteredCustomers}
             isSuspended={isCustomerSuspended}
             onToggleClick={handleToggleClick}
+            onRowClick={setSelectedCustomer}
           />
         )}
 
@@ -212,6 +265,92 @@ export default function AdminSellersPage() {
           System version: v2.4.0 &nbsp;•&nbsp; Last Activity: 2024.05.31 15:45
         </FooterRight>
       </PageFooter>
+
+      {/* ── 고객 상세 모달 ── */}
+      {selectedCustomer && (
+        <ModalOverlay onClick={handleCloseCustomerModal}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <ModalHeader>
+              <ModalTitleGroup>
+                <ModalIdBadge>{selectedCustomer.id}</ModalIdBadge>
+                <ModalTitle>{selectedCustomer.name}</ModalTitle>
+              </ModalTitleGroup>
+              <ModalCloseBtn onClick={handleCloseCustomerModal}>
+                <X size={18} />
+              </ModalCloseBtn>
+            </ModalHeader>
+
+            <ModalBody>
+              <CouponSectionHeader>
+                <CouponSectionTitle>
+                  <TicketPercent size={15} />
+                  보유 쿠폰
+                </CouponSectionTitle>
+                <CouponCount>
+                  {(customerCoupons[selectedCustomer.id] ?? []).length}장
+                </CouponCount>
+              </CouponSectionHeader>
+
+              {(customerCoupons[selectedCustomer.id] ?? []).length === 0 ? (
+                <CouponEmpty>보유 중인 쿠폰이 없습니다.</CouponEmpty>
+              ) : (
+                <CouponList>
+                  {(customerCoupons[selectedCustomer.id] ?? []).map((coupon) => (
+                    <CouponRow key={coupon.id}>
+                      <CouponDiscountBadge>{coupon.discount}</CouponDiscountBadge>
+                      <CouponInfo>
+                        <CouponTitle>{coupon.title}</CouponTitle>
+                        <CouponMeta>
+                          발급일 {coupon.issuedAt} &nbsp;·&nbsp; 만료일 {coupon.expireAt}
+                        </CouponMeta>
+                      </CouponInfo>
+                      <CouponDeleteBtn
+                        title="쿠폰 삭제"
+                        onClick={() => handleDeleteCoupon(selectedCustomer.id, coupon.id)}
+                      >
+                        <Trash2 size={14} />
+                      </CouponDeleteBtn>
+                    </CouponRow>
+                  ))}
+                </CouponList>
+              )}
+
+              {showIssuePanel && (
+                <IssuePanel>
+                  <IssuePanelTitle>쿠폰 발급</IssuePanelTitle>
+                  <IssueRow>
+                    <CouponSelect
+                      value={selectedTemplate}
+                      onChange={(e) => setSelectedTemplate(e.target.value)}
+                    >
+                      {COUPON_TEMPLATES.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.title} ({t.discount}, {t.validDays}일)
+                        </option>
+                      ))}
+                    </CouponSelect>
+                    <IssueConfirmBtn onClick={handleIssueCoupon}>발급</IssueConfirmBtn>
+                    <IssueCancelBtn onClick={() => setShowIssuePanel(false)}>취소</IssueCancelBtn>
+                  </IssueRow>
+                </IssuePanel>
+              )}
+            </ModalBody>
+
+            <ModalFooter>
+              <div />
+              <ModalActions>
+                <ModalCancelBtn onClick={handleCloseCustomerModal}>닫기</ModalCancelBtn>
+                {!showIssuePanel && (
+                  <CouponBtn onClick={() => setShowIssuePanel(true)}>
+                    <Plus size={13} />
+                    쿠폰 발급
+                  </CouponBtn>
+                )}
+              </ModalActions>
+            </ModalFooter>
+          </ModalContent>
+        </ModalOverlay>
+      )}
 
       {/* ── 활동정지 확인 모달 ── */}
       <ConfirmModal
@@ -376,5 +515,284 @@ const TableTitle = styled.h2`
   font-size: 16px;
   font-weight: 600;
   color: #0d1c2e;
+`;
+
+/* ── 고객 상세 모달 ── */
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const ModalContent = styled.div`
+  background: white;
+  width: 520px;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 90vh;
+`;
+
+const ModalHeader = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  gap: 12px;
+`;
+
+const ModalTitleGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+`;
+
+const ModalIdBadge = styled.span`
+  font-size: 11px;
+  font-weight: 600;
+  color: #244c54;
+  background: rgba(36,76,84,0.08);
+  padding: 2px 8px;
+  border-radius: 4px;
+  width: fit-content;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+`;
+
+const ModalTitle = styled.h2`
+  font-size: 18px;
+  font-weight: 700;
+  color: #0d1c2e;
+`;
+
+const ModalCloseBtn = styled.button`
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: color 0.15s;
+  &:hover { color: #475569; }
+`;
+
+const ModalBody = styled.div`
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+`;
+
+
+const ModalFooter = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+`;
+
+const ModalActions = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+const ModalCancelBtn = styled.button`
+  padding: 8px 18px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #475569;
+  transition: background 0.15s;
+  &:hover { background: #f1f5f9; }
+`;
+
+const CouponBtn = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  background: #244c54;
+  color: white;
+  border: 1px solid #244c54;
+  transition: background 0.15s;
+  &:hover { background: #1d3d44; }
+`;
+
+/* ── 쿠폰 섹션 ── */
+const CouponSectionHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+`;
+
+const CouponSectionTitle = styled.h3`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+`;
+
+const CouponCount = styled.span`
+  font-size: 12px;
+  font-weight: 600;
+  color: #244c54;
+  background: rgba(36,76,84,0.08);
+  padding: 2px 8px;
+  border-radius: 999px;
+`;
+
+const CouponEmpty = styled.p`
+  font-size: 13px;
+  color: #94a3b8;
+  text-align: center;
+  padding: 28px 0;
+  border: 1.5px dashed #e2e8f0;
+  border-radius: 8px;
+`;
+
+const CouponList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const CouponRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+`;
+
+const CouponDiscountBadge = styled.span`
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #244c54;
+  background: rgba(36,76,84,0.1);
+  padding: 4px 10px;
+  border-radius: 6px;
+  min-width: 56px;
+  text-align: center;
+`;
+
+const CouponInfo = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+`;
+
+const CouponTitle = styled.span`
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const CouponMeta = styled.span`
+  font-size: 11px;
+  color: #94a3b8;
+`;
+
+const CouponDeleteBtn = styled.button`
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 6px;
+  color: #94a3b8;
+  transition: all 0.15s;
+  &:hover {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+`;
+
+/* ── 쿠폰 발급 패널 ── */
+const IssuePanel = styled.div`
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: #f0fdf4;
+  border: 1.5px solid #86efac;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const IssuePanelTitle = styled.p`
+  font-size: 12px;
+  font-weight: 700;
+  color: #16a34a;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+`;
+
+const IssueRow = styled.div`
+  display: flex;
+  gap: 8px;
+  align-items: center;
+`;
+
+const CouponSelect = styled.select`
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #1e293b;
+  background: white;
+  outline: none;
+  &:focus { border-color: #244c54; }
+`;
+
+const IssueConfirmBtn = styled.button`
+  padding: 7px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  background: #16a34a;
+  color: white;
+  transition: background 0.15s;
+  &:hover { background: #15803d; }
+`;
+
+const IssueCancelBtn = styled.button`
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #64748b;
+  transition: background 0.15s;
+  &:hover { background: #f1f5f9; }
 `;
 
