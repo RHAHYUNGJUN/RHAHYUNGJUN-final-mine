@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
@@ -44,4 +45,15 @@ public class S3Service {
         return originalFilename.substring(originalFilename.lastIndexOf("."));
     }
 
+    public void delete(String s3Key) {
+
+        s3Client.deleteObject(
+                DeleteObjectRequest.builder()
+                        .bucket(bucket)
+                        .key(s3Key)
+                        .build()
+        );
+
+        log.info("S3 삭제 완료 key={}", s3Key);
+    }
 }

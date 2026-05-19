@@ -2,7 +2,6 @@ package com.kh.app.middle.coupon.entity;
 
 import com.kh.app.common.entity.BaseEntity;
 import com.kh.app.member.entity.MemberEntity;
-import com.kh.app.transaction.payment.entity.PaymentEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -23,7 +22,7 @@ public class MemberCouponEntity extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "MEMBER_ID")
-    private MemberEntity memberId;
+    private MemberEntity member;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "COUPON_ID")
     private CouponEntity couponId;
@@ -34,7 +33,10 @@ public class MemberCouponEntity extends BaseEntity {
 //    private PaymentEntity paymentId;
     private Long paymentId;
 
-    private String usedYn;
+    @Column(length = 1, nullable = false)
+    @Builder.Default
+    private String usedYn = "N";
+
     private LocalDateTime usedAt;
 
     // 쿠폰 사용
