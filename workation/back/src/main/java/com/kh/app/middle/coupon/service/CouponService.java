@@ -85,7 +85,7 @@ public class CouponService {
 
 
         MemberCouponEntity memberCouponEntity = MemberCouponEntity.builder()
-                .memberId(member)
+                .member(member)
                 .couponId(coupon)
                 .build();
 
@@ -100,7 +100,7 @@ public class CouponService {
         CouponEntity coupon = couponRepository.findByIdAndDelYn(reqDto.getCouponId(), "N").orElseThrow(EntityNotFoundException::new);
 
         MemberCouponEntity memberCouponEntity = MemberCouponEntity.builder()
-                .memberId(member)
+                .member(member)
                 .couponId(coupon)
                 .build();
 
@@ -121,7 +121,7 @@ public class CouponService {
         MemberCouponEntity memberCouponEntity = memberCouponRepository.findById(memberCouponId).orElseThrow(EntityNotFoundException::new);
 
         //쿠폰주인과 비교
-        if (!memberCouponEntity.getMemberId().getUsername().equals(username)) {
+        if (!memberCouponEntity.getMember().getUsername().equals(username)) {
             throw new IllegalStateException("[COUPON-7007] 본인의 쿠폰만 사용할 수 있습니다.");
         }
 
