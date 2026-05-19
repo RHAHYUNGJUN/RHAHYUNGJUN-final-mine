@@ -1,6 +1,5 @@
 package com.kh.app.transaction.payment.dto.request;
 
-import com.kh.app.member.entity.MemberEntity;
 import com.kh.app.transaction.payment.entity.PaymentEntity;
 import com.kh.app.transaction.payment.enums.PaymentMethod;
 import com.kh.app.transaction.payment.enums.PaymentStatus;
