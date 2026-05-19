@@ -94,7 +94,7 @@ function ReservationInsertPage() {
                 <Label>체크인 날짜</Label>
 
                 <Input
-                  type="datetime-local"
+                  type="date"
                   name="checkinDate"
                   value={vo.checkinDate}
                   onChange={handleChange}
@@ -105,7 +105,7 @@ function ReservationInsertPage() {
                 <Label>체크아웃 날짜</Label>
 
                 <Input
-                  type="datetime-local"
+                  type="date"
                   name="checkoutDate"
                   value={vo.checkoutDate}
                   onChange={handleChange}
@@ -140,7 +140,7 @@ function ReservationInsertPage() {
 
           {/* 환불 계좌 */}
           <Section>
-            <SectionTitle>환불 계좌 정보</SectionTitle>
+            <SectionTitle>지원금 수령 계좌</SectionTitle>
 
             <InputGroup>
               <Label>은행명</Label>

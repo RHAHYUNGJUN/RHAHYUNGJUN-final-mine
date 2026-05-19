@@ -2,12 +2,11 @@ package com.kh.app.transaction.reservation.entity;
 
 import com.kh.app.member.entity.MemberEntity;
 import com.kh.app.middle.coupon.entity.CouponEntity;
-import com.kh.app.product.stay.entity.StayEntity;
-import com.kh.app.transaction.reservation.dto.request.ReservationCreateReqDto;
 import com.kh.app.transaction.reservation.dto.request.ReservationUpdateReqDto;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -32,11 +31,13 @@ public class ReservationEntity {
     @JoinColumn(name = "COUPON_ID")
     private CouponEntity coupon;
 
-    // 숙소 예약
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "STAY_ID", nullable = false)
-    private StayEntity stay;
-
+    // 숙소 예약-stay 연결
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "STAY_ID", nullable = false)
+//    private StayEntity stay;
+    @Column(name = "STAY_ID")
+    private Long stayId;
+/// ////////////////////////////
     // 인원수
     @Column(nullable = false)
     private Integer guestCount;
@@ -47,11 +48,11 @@ public class ReservationEntity {
 
     // 체크인
     @Column(nullable = false)
-    private LocalDateTime checkinDate;
+    private LocalDate checkinDate;
 
     // 체크아웃
     @Column(nullable = false)
-    private LocalDateTime checkoutDate;
+    private LocalDate  checkoutDate;
 
     // 대표 예약자 전화번호
     @Column(nullable = false, length = 11)
@@ -187,26 +188,30 @@ public class ReservationEntity {
         }
 
         this.createdAt = LocalDateTime.now();
-
-        validateTarget();
+        //스테이 연결후 수정
+//        validateTarget();
     }
 
-    @PreUpdate
-    private void preUpdate() {
-        validateTarget();
-    }
+    /// ////////////////////////////////////////////////////////////
+    /// 스테이 연결후 변경
+//    @PreUpdate
+//    private void preUpdate() {
+//        validateTarget();
+//    }
 
     // =========================
     // 예약 대상 검증
     // =========================
 
-    private void validateTarget() {
 
-        if (stay == null) {
-            throw new IllegalStateException("예약 대상이 없습니다.");
-        }
-    }
+//    private void validateTarget() {
+//
+//        if (stay == null) {
+//            throw new IllegalStateException("예약 대상이 없습니다.");
+//        }
+//    }
 
+/// ///////////////////////////////////////////////////////////
     // =========================
     // 예약자 정보 수정
     // =========================
@@ -228,7 +233,7 @@ public class ReservationEntity {
     private void validateEditable() {
 
         if (this.status != ReservationStatus.PENDING) {
-            throw new IllegalStateException("수정 가능한 예약 상태가 아닙니다.");
+            throw new IllegalStateException("결제이후 수정불가능");
         }
     }
 }

@@ -4,8 +4,9 @@ import com.kh.app.aws.service.S3Service;
 import com.kh.app.member.entity.MemberEntity;
 import com.kh.app.member.repository.MemberRepository;
 import com.kh.app.middle.coupon.entity.CouponEntity;
-import com.kh.app.product.stay.entity.StayEntity;
 import com.kh.app.transaction.reservation.dto.request.ReservationCreateReqDto;
+import com.kh.app.transaction.reservation.dto.request.ReservationUpdateReqDto;
+import com.kh.app.transaction.reservation.dto.response.ReservationResDto;
 import com.kh.app.transaction.reservation.entity.ReservationEntity;
 import com.kh.app.transaction.reservation.entity.ReserveFileEntity;
 import com.kh.app.transaction.reservation.repository.ReservationRepository;
@@ -42,7 +43,8 @@ public class ReservationService {
     @Transactional
     public Long create(
             String username,
-            Long stayId,
+            //stay 완성후 사용
+//            Long stayId,
             ReservationCreateReqDto dto,
             List<MultipartFile> fileList
     ) throws IOException {
@@ -66,18 +68,14 @@ public class ReservationService {
 
         // TODO
         // stay 기능 완성 후 실제 DB 조회 및 존재 검증 필요
-        StayEntity stay = StayEntity.builder()
-                .id(stayId)
-                .build();
+        //스테이 수정후 변경
+//        StayEntity stay = StayEntity.builder()
+//                .id(stayId)
+//                .build();
+        Long stayId = dto.getStayId();
 
-        log.info(
-                "[임시 예약 생성] stayId={}",
-                stayId
-        );
-        log.info(
-                "[임시 예약 생성] stayId={}",
-                stayId
-        );
+
+
 
         // TODO
         // 실제 숙소 가격 정책 연결 예정
@@ -117,7 +115,9 @@ public class ReservationService {
                 dto.toEntity(
                         memberEntity,
                         coupon,
-                        stay,
+                        //스테이 수정후변경
+//                        stay,
+                        stayId,
                         originalPrice,
                         discountAmount,
                         totalPrice
@@ -155,4 +155,59 @@ public class ReservationService {
 
         return reservation.getId();
     }
+
+    @Transactional
+    public void update(Long id,
+                       ReservationUpdateReqDto dto,
+                       List<MultipartFile> newFiles) throws IOException {
+
+        ReservationEntity reservation = reservationRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("RESERVATION NOT FOUND"));
+
+        // 1. 예약 정보 수정
+        reservation.update(dto);
+
+        // 2. 기존 파일 삭제 (DB + S3)
+        List<ReserveFileEntity> oldFiles =
+                reserveFileRepository.findByReservationEntity_Id(id);
+
+        for (ReserveFileEntity file : oldFiles) {
+            s3Service.delete(file.getS3Key()); // S3 삭제
+        }
+
+        reserveFileRepository.deleteAll(oldFiles);
+
+        // 3. 새 파일 업로드
+        if (newFiles != null && !newFiles.isEmpty()) {
+
+            for (MultipartFile file : newFiles) {
+
+                String s3Key = s3Service.upload(file, "reservation");
+
+                reserveFileRepository.save(
+                        ReserveFileEntity.from(reservation, file, s3Key)
+                );
+            }
+        }
+    }
+
+    public List<ReservationResDto> getMyReservations(String username) {
+
+        return reservationRepository
+                .findByMember_UsernameOrderByIdDesc(username)
+                .stream()
+                .map(ReservationResDto::from)
+                .toList();
+    }
+
+    public ReservationResDto getOne(Long id) {
+
+
+
+        ReservationEntity entity = reservationRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("NOT FOUND"));
+
+        return ReservationResDto.from(entity);
+    }
+
 }

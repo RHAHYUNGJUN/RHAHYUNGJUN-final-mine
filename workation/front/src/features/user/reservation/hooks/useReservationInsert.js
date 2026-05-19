@@ -16,7 +16,6 @@ export default function useReservationInsert() {
 
       const formData = new FormData();
 
-      // dto JSON
       formData.append(
         'data',
         new Blob([JSON.stringify(vo)], {
@@ -24,17 +23,18 @@ export default function useReservationInsert() {
         })
       );
 
-      // 파일 추가
       fileList.forEach((file) => {
         formData.append('fileList', file);
       });
 
-      // API 호출
+      // ❌ const stayId = 1; 제거
+
+      // ✅ API 호출 + await + 결과 저장
       const resp = await createReservation(stayId, formData);
 
-      alert('예약 성공');
-
       console.log(resp.data);
+
+      alert('예약 성공');
 
       navigate('/');
 
@@ -51,7 +51,6 @@ export default function useReservationInsert() {
       dispatch(setLoading(false));
     }
   }
-
   return {
     insertReservation,
   };
