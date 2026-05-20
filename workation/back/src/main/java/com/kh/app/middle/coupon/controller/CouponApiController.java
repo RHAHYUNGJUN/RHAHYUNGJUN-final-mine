@@ -2,6 +2,7 @@ package com.kh.app.middle.coupon.controller;
 
 import com.kh.app.middle.coupon.dto.request.CouponCreateDto;
 import com.kh.app.middle.coupon.dto.request.MemberCouponReqDto;
+import com.kh.app.middle.coupon.dto.request.UserMemberCouponReqDto;
 import com.kh.app.middle.coupon.dto.response.CouponRespDto;
 import com.kh.app.middle.coupon.dto.response.MemberCouponRespDto;
 import com.kh.app.middle.coupon.service.CouponService;
@@ -29,7 +30,13 @@ public class CouponApiController {
 
     //쿠폰 리스트 조회
     @GetMapping("/admin/coupon")
-    public ResponseEntity<Page<CouponRespDto>> list(@RequestParam(defaultValue = "0") int pno){
+    public ResponseEntity<Page<?>> list(@RequestParam(defaultValue = "0") int pno, @RequestParam(required = false) String username){
+        // 계정정보 있으면 계정쿠폰조회
+        if (username != null && !username.isBlank()) {
+            Page<MemberCouponRespDto> couponList = couponService.getCouponList(username, pno);
+            return ResponseEntity.ok(couponList);
+        }
+        //전체쿠폰 조회
         Page<CouponRespDto> couponList = couponService.getList(pno);
         return ResponseEntity.ok(couponList);
     }
@@ -81,13 +88,11 @@ public class CouponApiController {
         return ResponseEntity.ok(couponList);
     }
 
-    // admin 이 멤버 보유 쿠폰 조회
-
     //유저가 멤버쿠폰 사용
     @PutMapping("/user/memberCoupon")
-    public ResponseEntity<Object> useMemberCoupon(@RequestBody Long memberCouponId){
+    public ResponseEntity<Object> useMemberCoupon(@RequestBody UserMemberCouponReqDto reqDto){
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        couponService.useMemberCoupon(username, memberCouponId);
+        couponService.useMemberCoupon(username, reqDto);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 }
